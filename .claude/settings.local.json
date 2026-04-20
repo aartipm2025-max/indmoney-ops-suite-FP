@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(export PATH=\"$HOME/.local/bin:$PATH\")",
+      "Bash(uv init *)",
+      "Bash(mkdir -p core schemas pillars/pillar_a_knowledge pillars/pillar_b_voice pillars/pillar_c_hitl evals ui/tabs scripts data/factsheets data/fees data/reviews data/manifests logs .secrets docs tests)",
+      "Bash(touch core/__init__.py core/logger.py core/error_logger.py core/request_context.py core/exceptions.py core/llm_client.py core/instructor_clients.py schemas/__init__.py pillars/__init__.py pillars/pillar_a_knowledge/__init__.py pillars/pillar_b_voice/__init__.py pillars/pillar_c_hitl/__init__.py evals/__init__.py ui/__init__.py ui/tabs/__init__.py scripts/__init__.py tests/__init__.py tests/test_p0_foundation.py data/factsheets/.gitkeep data/fees/.gitkeep data/reviews/.gitkeep data/manifests/.gitkeep logs/.gitkeep .secrets/.gitkeep)",
+      "Bash(uv add *)",
+      "Bash(uv sync *)",
+      "Bash(uv run *)"
+    ]
+  }
+}
