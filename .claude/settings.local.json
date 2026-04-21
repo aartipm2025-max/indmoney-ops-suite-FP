@@ -9,7 +9,13 @@
       "Bash(uv sync *)",
       "Bash(uv run *)",
       "Bash(python -c \"import os; [print\\(os.path.join\\(r,f\\)\\) for r,d,files in os.walk\\('.'\\) if '.venv' not in r and '.git' not in r for f in files]\")",
-      "PowerShell(uv run *)"
+      "PowerShell(uv run *)",
+      "PowerShell(uv add *)",
+      "Bash(python -c \"import bm25s; print\\(bm25s.__version__\\)\")",
+      "Bash(python -c \"import chromadb; print\\(chromadb.__version__\\)\")",
+      "Bash(python -c \"import sqlalchemy; print\\(sqlalchemy.__version__\\)\")",
+      "Bash(rm -f data/factsheets/hdfc_flexicap.md data/factsheets/axis_elss.md data/factsheets/sbi_bluechip.md data/factsheets/icici_debt.md data/factsheets/nippon_smallcap.md data/fees/fee_schedule.md data/chunker.py data/db.py data/seeder.py)",
+      "Bash(rmdir data/factsheets data/fees data/reviews data/manifests)"
     ]
   }
 }
