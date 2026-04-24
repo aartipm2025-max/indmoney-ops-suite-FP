@@ -1,0 +1,185 @@
+{
+  "generated_at": "2026-04-24T10:53:08Z",
+  "total_urls": 20,
+  "verified_ok": 18,
+  "broken": 2,
+  "entries": [
+    {
+      "url": "https://www.sbimf.com/sbimf-scheme-details/sbi-large-cap-fund-(formerly-known-as-sbi-bluechip-fund)-43",
+      "title": "SBI Large Cap Fund",
+      "category": "factsheet",
+      "used_in_docs": [
+        "sbi_bluechip.md"
+      ],
+      "last_verified": "2026-04-24T10:52:59Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://www.sbimf.com/sbimf-scheme-details/sbi-small-cap-fund-329",
+      "title": "SBI Small Cap Fund",
+      "category": "factsheet",
+      "used_in_docs": [
+        "sbi_small_cap.md"
+      ],
+      "last_verified": "2026-04-24T10:53:00Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://www.sbimf.com/sbimf-scheme-details/sbi-equity-hybrid-fund-5",
+      "title": "SBI Equity Hybrid Fund",
+      "category": "factsheet",
+      "used_in_docs": [
+        "sbi_equity_hybrid.md"
+      ],
+      "last_verified": "2026-04-24T10:53:00Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://www.sbimf.com/sbimf-scheme-details/sbi-midcap-fund-34",
+      "title": "SBI Midcap Fund",
+      "category": "factsheet",
+      "used_in_docs": [
+        "sbi_midcap.md"
+      ],
+      "last_verified": "2026-04-24T10:53:00Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://www.sbimf.com/sbimf-scheme-details/sbi-elss-tax-saver-fund-(formerly-known-as-sbi-long-term-equity-fund)-3",
+      "title": "SBI ELSS Tax Saver Fund",
+      "category": "factsheet",
+      "used_in_docs": [
+        "sbi_long_term_equity.md",
+        "elss_exit_load.md"
+      ],
+      "last_verified": "2026-04-24T10:53:00Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://investor.sebi.gov.in/knowledge-centre/exit-load.html",
+      "title": "SEBI — Exit Load",
+      "category": "regulatory",
+      "used_in_docs": [
+        "elss_exit_load.md"
+      ],
+      "last_verified": "2026-04-24T10:53:00Z",
+      "status": "http_404"
+    },
+    {
+      "url": "https://www.sebi.gov.in/legal/regulations/sep-2019/securities-and-exchange-board-of-india-mutual-funds-regulations-1996-last-amended-on-september-23-2019-_41350.html",
+      "title": "SEBI MF Regulations 1996",
+      "category": "regulatory",
+      "used_in_docs": [],
+      "last_verified": "2026-04-24T10:53:01Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://www.sebi.gov.in/sebi_data/attachdocs/1337083696184.pdf",
+      "title": "SEBI Riskometer Circular",
+      "category": "regulatory",
+      "used_in_docs": [],
+      "last_verified": "2026-04-24T10:53:01Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://www.amfiindia.com/investor/investor-awareness-program",
+      "title": "AMFI Investor Awareness",
+      "category": "reference",
+      "used_in_docs": [],
+      "last_verified": "2026-04-24T10:53:03Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://www.amfiindia.com/investor/knowledge-center-info?zoneName=IntroductionMutualFunds",
+      "title": "AMFI — MF Basics",
+      "category": "reference",
+      "used_in_docs": [],
+      "last_verified": "2026-04-24T10:53:03Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://www.amfiindia.com/investor/become-mf-distributor?zoneName=sip",
+      "title": "AMFI — SIP",
+      "category": "reference",
+      "used_in_docs": [],
+      "last_verified": "2026-04-24T10:53:03Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://www.amfiindia.com/kyc",
+      "title": "AMFI — KYC",
+      "category": "reference",
+      "used_in_docs": [],
+      "last_verified": "2026-04-24T10:53:04Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://www.sbimf.com",
+      "title": "SBI MF Homepage",
+      "category": "reference",
+      "used_in_docs": [],
+      "last_verified": "2026-04-24T10:53:04Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://www.sbimf.com/faq",
+      "title": "SBI MF FAQ",
+      "category": "reference",
+      "used_in_docs": [],
+      "last_verified": "2026-04-24T10:53:04Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://www.sbimf.com/offer-document-sid-kim",
+      "title": "SBI MF — SID/KIM",
+      "category": "reference",
+      "used_in_docs": [],
+      "last_verified": "2026-04-24T10:53:04Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://play.google.com/store/apps/details?id=in.indwealth",
+      "title": "INDmoney Play Store",
+      "category": "app_listing",
+      "used_in_docs": [],
+      "last_verified": "2026-04-24T10:53:04Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://www.incometaxindia.gov.in/section-80-c",
+      "title": "Income Tax — Section 80C",
+      "category": "regulatory",
+      "used_in_docs": [
+        "elss_exit_load.md"
+      ],
+      "last_verified": "2026-04-24T10:53:05Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://www.incometaxindia.gov.in/sale-of-shares",
+      "title": "Income Tax — Capital Gains",
+      "category": "regulatory",
+      "used_in_docs": [],
+      "last_verified": "2026-04-24T10:53:06Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://www.camsonline.com/Investors",
+      "title": "CAMS Investor Services",
+      "category": "reference",
+      "used_in_docs": [],
+      "last_verified": "2026-04-24T10:53:06Z",
+      "status": "ok"
+    },
+    {
+      "url": "https://www.indmoney.com/help/mutual-funds/what-is-exit-load",
+      "title": "INDmoney Help — Exit Load",
+      "category": "reference",
+      "used_in_docs": [
+        "elss_exit_load.md"
+      ],
+      "last_verified": "2026-04-24T10:53:07Z",
+      "status": "http_403"
+    }
+  ]
+}

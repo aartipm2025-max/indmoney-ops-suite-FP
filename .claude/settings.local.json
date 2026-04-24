@@ -15,7 +15,11 @@
       "Bash(python -c \"import chromadb; print\\(chromadb.__version__\\)\")",
       "Bash(python -c \"import sqlalchemy; print\\(sqlalchemy.__version__\\)\")",
       "Bash(rm -f data/factsheets/hdfc_flexicap.md data/factsheets/axis_elss.md data/factsheets/sbi_bluechip.md data/factsheets/icici_debt.md data/factsheets/nippon_smallcap.md data/fees/fee_schedule.md data/chunker.py data/db.py data/seeder.py)",
-      "Bash(rmdir data/factsheets data/fees data/reviews data/manifests)"
+      "Bash(rmdir data/factsheets data/fees data/reviews data/manifests)",
+      "Bash(PYTHONPATH=\"C:/FINAL CAPSTONE PROJECT\" uv run python scripts/fetch_factsheets.py)",
+      "Bash(git -C \"/c/FINAL CAPSTONE PROJECT\" log --oneline --all)",
+      "Bash(PYTHONPATH=\"C:/FINAL CAPSTONE PROJECT\" uv run python scripts/scrape_reviews.py)",
+      "Bash(python *)"
     ]
   }
 }
