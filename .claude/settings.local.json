@@ -19,7 +19,8 @@
       "Bash(PYTHONPATH=\"C:/FINAL CAPSTONE PROJECT\" uv run python scripts/fetch_factsheets.py)",
       "Bash(git -C \"/c/FINAL CAPSTONE PROJECT\" log --oneline --all)",
       "Bash(PYTHONPATH=\"C:/FINAL CAPSTONE PROJECT\" uv run python scripts/scrape_reviews.py)",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(Get-Content \"C:\\\\Users\\\\Admin\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--FINAL-CAPSTONE-PROJECT\\\\dca01d81-4476-432a-a54b-e4ad645a6bcb\\\\tasks\\\\bejw1xso5.output\" -Wait)"
     ]
   }
 }
