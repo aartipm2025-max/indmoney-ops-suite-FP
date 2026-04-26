@@ -58,23 +58,47 @@ def _get_conn():
 
 
 def submit_for_approval(tool_payload: dict, request_id: str = "") -> str:
-    """Submit an MCP tool action to the HITL queue. Returns op_id."""
+    """Submit an MCP tool action to the HITL queue. Returns op_id.
+
+    Idempotency key is '{request_id}:{op_type}', which guarantees:
+      - No collision between different op types in the same run.
+      - No crash on pipeline re-runs with the same request_id.
+    If the key already exists the insert is silently skipped and the
+    existing op_id is returned for full retry-safety.
+    """
+    op_type = tool_payload["tool"]  # e.g. "calendar_hold"
     op_id = uuid.uuid4().hex[:12]
     now = datetime.now(timezone.utc).isoformat()
-    idempotency_key = f"{tool_payload['tool']}_{tool_payload['payload'].get('booking_code', op_id)}"
+    # Key is traceable (request_id) AND unique per op_type per run
+    idempotency_key = f"{request_id}:{op_type}"
 
     conn = _get_conn()
     try:
-        conn.execute(
-            "INSERT INTO pending_ops (id, op_type, status, payload_json, idempotency_key, created_at, request_id) VALUES (?, ?, 'pending', ?, ?, ?, ?)",
-            (op_id, tool_payload["tool"], json.dumps(tool_payload), idempotency_key, now, request_id)
+        cursor = conn.execute(
+            "INSERT OR IGNORE INTO pending_ops "
+            "(id, op_type, status, payload_json, idempotency_key, created_at, request_id) "
+            "VALUES (?, ?, 'pending', ?, ?, ?, ?)",
+            (op_id, op_type, json.dumps(tool_payload), idempotency_key, now, request_id)
         )
+        if cursor.rowcount == 0:
+            # A row with this idempotency_key already exists — skip silently
+            log.warning(
+                "HITL: duplicate ignored for key={}", idempotency_key
+            )
+            # Return the existing op_id so callers stay unaffected
+            existing = conn.execute(
+                "SELECT id FROM pending_ops WHERE idempotency_key=?",
+                (idempotency_key,)
+            ).fetchone()
+            conn.close()
+            return existing[0] if existing else op_id
+
         conn.execute(
             "INSERT INTO audit_log (op_id, action, details_json, timestamp) VALUES (?, 'submitted', ?, ?)",
-            (op_id, json.dumps({"tool": tool_payload["tool"]}), now)
+            (op_id, json.dumps({"tool": op_type}), now)
         )
         conn.commit()
-        log.info("HITL: submitted op_id={} type={}", op_id, tool_payload["tool"])
+        log.info("HITL: submitted op_id={} type={}", op_id, op_type)
     finally:
         conn.close()
     return op_id
