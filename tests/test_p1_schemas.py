@@ -69,7 +69,7 @@ def make_bullet(doc_id: str = "axis_elss") -> Bullet:
     )
 
 
-def make_rag_answer(n_bullets: int = 6) -> dict[str, Any]:
+def make_rag_answer(n_bullets: int = 3) -> dict[str, Any]:
     retrieved = [make_citation("axis_elss")]
     bullets = [make_bullet("axis_elss") for _ in range(n_bullets)]
     return dict(
@@ -218,7 +218,7 @@ def make_eval_result() -> EvalResult:
                 judge_model="llama3-70b",
             )
         ],
-        deterministic_checks={"six_bullets": True},
+        deterministic_checks={"three_bullets": True},
         raw_output="The exit load is 1% for redemption within 1 year. [source:axis_elss]",
         ran_at=NOW,
         latency_ms=1200,
@@ -336,18 +336,18 @@ class TestRAGAnswer:
         a2 = RAGAnswer(**a.model_dump())
         assert a == a2
 
-    def test_five_bullets_fails(self) -> None:
+    def test_two_bullets_fails(self) -> None:
         with pytest.raises(ValidationError):
-            RAGAnswer(**make_rag_answer(n_bullets=5))
+            RAGAnswer(**make_rag_answer(n_bullets=2))
 
-    def test_seven_bullets_fails(self) -> None:
+    def test_four_bullets_fails(self) -> None:
         with pytest.raises(ValidationError):
-            RAGAnswer(**make_rag_answer(n_bullets=7))
+            RAGAnswer(**make_rag_answer(n_bullets=4))
 
     def test_bullet_citing_missing_doc_fails(self) -> None:
         data = make_rag_answer()
         # bullet cites "sbi_bluechip" but retrieved_chunks only has "axis_elss"
-        data["bullets"] = [make_bullet("axis_elss")] * 5 + [make_bullet("sbi_bluechip")]
+        data["bullets"] = [make_bullet("axis_elss")] * 2 + [make_bullet("sbi_bluechip")]
         with pytest.raises(ValidationError, match="sbi_bluechip"):
             RAGAnswer(**data)
 

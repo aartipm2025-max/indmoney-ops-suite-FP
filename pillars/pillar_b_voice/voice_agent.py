@@ -100,33 +100,30 @@ class VoiceAgent:
                 next_state = VoiceState.FAILED
 
         elif self.state == VoiceState.TOPIC_SELECT:
+            # Check for investment advice
             if any(w in user_input.lower() for w in ["should i invest", "recommend", "best fund", "buy", "sell"]):
-                response = (
-                    "I cannot provide investment advice. For guidance, please visit "
-                    "https://www.amfiindia.com/investor/knowledge-center-info. "
-                    "Would you like to book an advisor call instead?"
-                )
-                next_state = VoiceState.TOPIC_SELECT
+                response = "I cannot provide investment advice. For guidance, please visit https://www.amfiindia.com/investor/knowledge-center-info. Would you like to book an advisor call instead?"
+                # Stay in TOPIC_SELECT, don't advance
             else:
+                # Try to match topic by number or keyword
                 matched = None
                 try:
-                    idx = int(user_input) - 1
+                    idx = int(user_input.strip()) - 1
                     if 0 <= idx < len(TOPICS):
                         matched = TOPICS[idx]
                 except ValueError:
                     for t in TOPICS:
-                        if any(word in user_input.lower() for word in t.lower().split("/")):
+                        if any(word in user_input.lower() for word in t.lower().replace("/", " ").split()):
                             matched = t
                             break
+
                 if matched:
                     self.topic = matched
-                    response = (
-                        f"Got it — {matched}. When would you prefer the call? "
-                        f"(e.g., 'Monday morning', 'tomorrow afternoon', or a specific date)"
-                    )
+                    response = f"Got it — {matched}. When would you prefer the call? (e.g., 'tomorrow', 'Monday afternoon')"
                     next_state = VoiceState.TIME_PREFERENCE
                 else:
                     response = "I didn't catch that. Please choose a number (1-5) or describe your topic."
+                    # Stay in TOPIC_SELECT
 
         elif self.state == VoiceState.TIME_PREFERENCE:
             self.time_pref = user_input

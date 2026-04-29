@@ -65,7 +65,7 @@ class Bullet(OpsSuiteBaseModel):
 class RAGAnswer(OpsSuiteBaseModel):
     query: NonEmptyStr
     route: QueryRoute
-    bullets: conlist(Bullet, min_length=6, max_length=6)  # type: ignore[valid-type]
+    bullets: conlist(Bullet, min_length=3, max_length=3)  # type: ignore[valid-type]
     retrieved_chunks: conlist(Citation, min_length=1, max_length=20)  # type: ignore[valid-type]
     generated_at: UtcDateTime = Field(default_factory=utcnow)
     model_name: ShortStr

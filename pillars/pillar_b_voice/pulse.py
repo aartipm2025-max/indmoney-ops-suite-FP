@@ -1,8 +1,8 @@
 """
 Weekly Product Pulse generator.
 
-Takes themes with trend data, sends them to ``llama-3.3-70b-versatile``
-(primary tier), and produces a structured ≤250-word pulse report with
+Takes themes with trend data, sends them to the fast (8B) model tier
+and produces a structured ≤250-word pulse report with
 exactly 3 action items.
 """
 
@@ -135,16 +135,17 @@ def generate_pulse(
     top_themes = themes_with_trends[:TOP_K]
     user_message = _build_user_message(top_themes, total_reviews, date_range)
 
-    llm = LLMClient()
+    # Use fast model for pulse (8B is sufficient, 3x faster than 70B)
+    client = LLMClient(model="fast")  # 8B instead of 70B
 
     # --- First attempt ---
     try:
-        raw = llm.chat(
+        raw = client.chat(
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_message},
             ],
-            model="primary",
+            model="fast",
             temperature=0.3,
             max_tokens=1024,
         )
@@ -168,14 +169,14 @@ def generate_pulse(
             f"It MUST be under {MAX_WORDS} words. Shorten it significantly."
         )
         try:
-            raw = llm.chat(
+            raw = client.chat(
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": user_message},
                     {"role": "assistant", "content": raw},
                     {"role": "user", "content": retry_instruction},
                 ],
-                model="primary",
+                model="fast",
                 temperature=0.2,
                 max_tokens=1024,
             )

@@ -13,12 +13,16 @@ from sentence_transformers import CrossEncoder
 from core.logger import log
 
 RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+RERANK_MAX_LENGTH = 256
 
 
 class CrossEncoderReranker:
     def __init__(self) -> None:
         log.info("CrossEncoderReranker: loading model '{}'", RERANKER_MODEL)
-        self.model = CrossEncoder(RERANKER_MODEL)
+        self.model = CrossEncoder(
+            RERANKER_MODEL,
+            max_length=RERANK_MAX_LENGTH,
+        )
         log.info("CrossEncoderReranker: ready")
 
     def rerank(
