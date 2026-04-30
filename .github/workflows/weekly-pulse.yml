@@ -1,0 +1,43 @@
+name: Weekly Pulse Auto-Refresh
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'  # Every Monday at 3:30 AM IST (9 PM UTC Sunday)
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  refresh-pulse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Scrape new reviews
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          uv run python scripts/scrape_reviews.py
+          uv run python scripts/clean_reviews.py
+
+      - name: Generate pulse
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: uv run python scripts/generate_pulse.py > data/pulse_latest.txt
+
+      - name: Commit changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add data/reviews/reviews.csv data/pulse_latest.txt
+          git diff --quiet && git diff --staged --quiet || git commit -m "chore: weekly pulse refresh $(date +'%Y-%m-%d')"
+          git push

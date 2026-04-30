@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -8,20 +11,9 @@ st.set_page_config(
     page_title="INDmoney Investor Ops Suite",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-
-@st.cache_resource(show_spinner=False)
-def _prewarm_smart_sync_kb() -> bool:
-    """Preload KB retriever/reranker once per Streamlit server process."""
-    from pillars.pillar_a_knowledge.answerer import prewarm_knowledge_base
-
-    prewarm_knowledge_base()
-    return True
-
-
-_prewarm_smart_sync_kb()
 
 # Custom CSS — INDmoney navy + gold theme
 st.markdown("""
@@ -55,83 +47,30 @@ st.markdown("""
         font-size: 0.85em;
         color: #0B1F3A;
     }
+    .chat-agent {
+        background: #F6F8FB;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        border-left: 4px solid #0B1F3A;
+    }
+    .chat-user {
+        background: #E8F0FE;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        border-left: 4px solid #4285F4;
+        margin-left: 40px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# Sidebar — System Health
-with st.sidebar:
-    st.image("https://www.indmoney.com/favicon.ico", width=40)
-    st.title("Ops Suite")
-    st.markdown("---")
-
-    error_log = Path("logs/system_errors.log")
-
-    if error_log.exists():
-        import re
-
-        content = error_log.read_text(encoding="utf-8", errors="ignore")
-
-        # Split log into blocks
-        blocks = re.split(r"─{20,}", content)
-
-        total_pending = 0
-        actionable = 0
-        transient = 0
-
-        transient_keywords = [
-            "ratelimit", "rate_limit", "autherror",
-            "authentication", "jsondecode", "invalid_api_key"
-        ]
-
-        for block in blocks:
-            if "[STATUS]" not in block:
-                continue
-
-            status_match = re.search(r"\[STATUS\]\s+(\S+)", block)
-            if not status_match:
-                continue
-
-            status = status_match.group(1).lower()
-
-            # Ignore already handled logs
-            if status in ["documented", "resolved"]:
-                continue
-
-            if status != "pending":
-                continue
-
-            total_pending += 1
-            block_lower = block.lower()
-
-            if any(kw in block_lower for kw in transient_keywords):
-                transient += 1
-            else:
-                actionable += 1
-
-        # Display system health
-        if actionable > 0:
-            st.warning(f"🟡 {actionable} actionable error{'s' if actionable != 1 else ''}")
-        else:
-            st.success("🟢 System healthy")
-
-        # Expand log details
-        if total_pending > 0:
-            with st.expander(f"📋 Log: {total_pending} total pending"):
-                st.caption(f"Actionable: {actionable}")
-                st.caption(f"Transient (rate-limit/auth/json): {transient}")
-
-    else:
-        st.success("🟢 No errors logged")
-
-    st.markdown("---")
-    st.caption("INDmoney Investor Ops & Intelligence Suite")
-    st.caption("Built by Aarti Dhavare")
-
 # Main tabs
-tab_a, tab_b, tab_c, tab_d = st.tabs([
-    "📚 Smart-Sync KB",
-    "📊 Pulse & Voice",
-    "✅ HITL Center",
+tab_a, tab_b, tab_c, tab_d, tab_e = st.tabs([
+    "💬 Ask About Funds",
+    "📊 Weekly Pulse",
+    "🎙️ Voice Scheduler",
+    "✅ Action Approval",
     "📈 Evals"
 ])
 
@@ -150,3 +89,15 @@ with tab_c:
 with tab_d:
     from ui.tabs.tab_d import render_tab_d
     render_tab_d()
+
+with tab_e:
+    from ui.tabs.tab_e import render_tab_e
+    render_tab_e()
+
+st.markdown("---")
+st.markdown("""
+<div style="text-align: center; padding: 20px; color: #5A6C7D;">
+    <p style="margin: 0; font-size: 0.9em;"><strong>INDmoney Investor Ops & Intelligence Suite</strong></p>
+    <p style="margin: 0; font-size: 0.8em;">Built by Aarti Dhavare</p>
+</div>
+""", unsafe_allow_html=True)

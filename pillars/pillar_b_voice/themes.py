@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-BATCH_SIZE = 50
+BATCH_SIZE = 100
 MAX_THEMES_PER_BATCH = 5
 TOP_N = 5
 
@@ -126,6 +126,7 @@ def extract_themes(reviews_csv_path: Path) -> list[dict]:
         Top 5 themes, each with keys: ``theme``, ``count``, ``quote``, ``review_ids``.
     """
     df = pd.read_csv(reviews_csv_path)
+    df = df.sort_values("review_date", ascending=False).head(200)
     logger.info("Loaded %d reviews from %s", len(df), reviews_csv_path)
 
     llm = LLMClient()

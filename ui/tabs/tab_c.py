@@ -1,95 +1,240 @@
 import streamlit as st
 import sys
-import json
+import re
+import time
+import hashlib
 from pathlib import Path
-from datetime import datetime, timezone
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from audio_recorder_streamlit import audio_recorder
+
+
+def speak_text(text: str):
+    """Convert text to speech using browser TTS."""
+    clean_text = re.sub(r'\[.*?\]', '', text)
+    clean_text = re.sub(r'[*_~`]', '', clean_text)
+    clean_text = clean_text.replace('\n', '. ')
+    clean_text = clean_text.replace('"', '\\"')
+
+    st.markdown(f"""
+    <script>
+        var utterance = new SpeechSynthesisUtterance("{clean_text}");
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        // Use female voice if available
+        var voices = window.speechSynthesis.getVoices();
+        var femaleVoice = voices.find(v => v.name.includes('Female') || v.name.includes('Samantha') || v.name.includes('Google US English'));
+        if (femaleVoice) {{
+            utterance.voice = femaleVoice;
+        }}
+
+        window.speechSynthesis.speak(utterance);
+    </script>
+    """, unsafe_allow_html=True)
 
 
 def render_tab_c():
-    st.header("✅ HITL Approval Center")
-    st.caption("Review and approve/reject MCP actions before they execute on Google services.")
+    st.header("🎙️ AI Advisor Scheduler")
+    st.caption("Book advisor consultations via voice or text. Theme-aware greetings based on latest pulse data.")
 
-    from pillars.pillar_c_hitl.approval import get_pending_ops, get_all_ops, approve, reject, REJECT_REASONS
+    # Prevent infinite loops
+    if "voice_turn_count" not in st.session_state:
+        st.session_state["voice_turn_count"] = 0
 
-    # Submit actions from voice booking
-    if "booking_context" in st.session_state and "pulse" in st.session_state:
-        bc = st.session_state["booking_context"]
-        pulse = st.session_state["pulse"]
-        booking_code = bc.get("booking_code", "N/A")
+    # Reset if too many turns (safety)
+    if st.session_state["voice_turn_count"] > 20:
+        st.warning("⚠️ Conversation limit reached. Starting fresh.")
+        for key in ["voice_agent", "voice_history", "booking_context", "voice_turn_count"]:
+            st.session_state.pop(key, None)
+        st.rerun()
 
-        with st.expander(f"📝 Generate MCP Actions for booking {booking_code}", expanded=True):
-            if st.button("Submit Calendar + Email + Doc to HITL Queue", key="submit_hitl"):
-                from pillars.pillar_c_hitl.mcp_tools import create_calendar_hold, create_email_draft, create_doc_append
-                from pillars.pillar_c_hitl.briefing_card import generate_briefing_card, format_briefing_html, format_briefing_plain
+    # Connect to pulse theme
+    if "themes" in st.session_state and st.session_state["themes"]:
+        top_theme = st.session_state["themes"][0].get("theme", "general")
+        st.session_state["voice_top_theme"] = top_theme
+        st.info(f"🎯 Connected to pulse theme: **{top_theme}**")
+    else:
+        st.session_state.setdefault("voice_top_theme", "general")
+        st.warning("💡 Generate a pulse in **Weekly Pulse** tab first for theme-aware greeting")
 
-                card = generate_briefing_card(pulse, bc)
-                html = format_briefing_html(card)
-                plain = format_briefing_plain(card)
+    # Initialize voice agent
+    if "voice_agent" not in st.session_state:
+        top_theme = st.session_state.get("voice_top_theme", "general")
+        from pillars.pillar_b_voice.voice_agent import VoiceAgent
+        st.session_state["voice_agent"] = VoiceAgent(top_theme=top_theme)
 
-                slot = bc.get("slot", {})
-                start = slot.get("date", "2026-04-28") + "T10:00:00+05:30"
-                end = slot.get("date", "2026-04-28") + "T10:30:00+05:30"
+        # Auto-greeting
+        greeting = st.session_state["voice_agent"].process_turn("hello")
+        if "voice_history" not in st.session_state:
+            st.session_state["voice_history"] = []
+        st.session_state["voice_history"].append({
+            "role": "agent",
+            "text": greeting["response"],
+            "state": greeting["state"]
+        })
 
-                from pillars.pillar_c_hitl.approval import submit_for_approval
+        # AUTO-SPEAK GREETING
+        speak_text(greeting["response"])
 
-                op1 = submit_for_approval(create_calendar_hold(
-                    f"Advisor Q&A — {bc.get('topic', 'General')} — {booking_code}",
-                    f"Booking: {booking_code}\n{plain}", start, end))
-                op2 = submit_for_approval(create_email_draft(
-                    ["advisor@indmoney.demo"],
-                    f"Weekly Pulse + Briefing [{booking_code}]",
-                    html, plain, booking_code))
-                op3 = submit_for_approval(create_doc_append(
-                    "Advisor Pre-Bookings",
-                    f"Date: {datetime.now(timezone.utc).isoformat()}\nBooking: {booking_code}\nTopic: {bc.get('topic')}\n{plain}",
-                    booking_code))
+    # Conversation display
+    st.markdown("### 💬 Conversation")
 
-                st.success(f"✅ 3 actions submitted: {op1}, {op2}, {op3}")
+    history = st.session_state.get("voice_history", [])
+    latest_entry = history[-1] if history else None
+
+    for entry in history:
+        role = entry.get("role")
+        text = entry.get("text")
+        state = entry.get("state", "")
+
+        if role == "agent":
+            st.markdown(f"""
+            <div style="background: #F0F4F8; border-radius: 12px; padding: 20px; margin-bottom: 16px; border-left: 4px solid #0B1F3A;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <span style="font-size: 24px;">🤖</span>
+                    <div>
+                        <strong style="color: #0B1F3A;">Agent</strong>
+                        <span style="background: #E8EDF3; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; margin-left: 8px;">{state}</span>
+                    </div>
+                </div>
+                <div style="color: #2C3E50;">{text}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Speak only the latest agent message
+            if entry is latest_entry:
+                speak_text(text)
+        else:
+            st.markdown(f"""
+            <div style="background: #E8F0FE; border-radius: 12px; padding: 20px; margin-bottom: 16px; margin-left: 40px; border-left: 4px solid #4285F4;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <span style="font-size: 24px;">👤</span>
+                    <strong style="color: #0B1F3A;">You</strong>
+                </div>
+                <div style="color: #2C3E50;">{text}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # Input section
+    st.markdown("---")
+    st.markdown("### 💬 Your Response")
+
+    col1, col2 = st.columns([3, 1])
+
+    with col1:
+        text_input = st.text_input(
+            "Type your message:",
+            key="voice_text_input",
+            placeholder="Type here or use microphone...",
+            label_visibility="collapsed"
+        )
+        if st.button("Send", key="send_text", type="primary", use_container_width=True):
+            if text_input:
+                st.session_state["voice_history"].append({"role": "user", "text": text_input})
+                result = st.session_state["voice_agent"].process_turn(text_input)
+                st.session_state["voice_history"].append({
+                    "role": "agent",
+                    "text": result["response"],
+                    "state": result["state"]
+                })
+                if result.get("booking_code"):
+                    st.session_state["booking_context"] = st.session_state["voice_agent"].get_booking_context()
+                    speak_text(f"Booking confirmed! Your booking code is {result['booking_code']}")
+                st.session_state["voice_turn_count"] += 1
+                time.sleep(0.5)
                 st.rerun()
-    else:
-        st.info("💡 Generate a pulse (Tab B) and complete a voice booking first to create HITL actions.")
 
-    st.markdown("---")
+    with col2:
+        st.caption("Or speak:")
+        audio_bytes = audio_recorder(
+            text="🎤",
+            recording_color="#D4A437",
+            neutral_color="#0B1F3A",
+            pause_threshold=2.5,
+            sample_rate=16000
+        )
 
-    # Pending operations
-    st.subheader("Pending Approvals")
-    pending = get_pending_ops()
+    # Process audio only when a genuinely new recording arrives.
+    # audio_recorder holds the last bytes across reruns, so a boolean lock
+    # always resets on rerun. A content hash is stable: same bytes → same
+    # hash → skip; new recording → different hash → process once.
+    if audio_bytes is not None:
+        audio_hash = hashlib.md5(audio_bytes).hexdigest()
+        if audio_hash != st.session_state.get("last_audio_hash"):
+            st.session_state["last_audio_hash"] = audio_hash
 
-    if not pending:
-        st.info("No pending operations.")
-    else:
-        for op in pending:
-            with st.expander(f"🔶 {op['op_type']} — {op['id']}", expanded=True):
-                payload = op.get("payload", {})
-                st.json(payload)
+            with st.spinner("🎧 Transcribing..."):
+                try:
+                    import tempfile
+                    from groq import Groq
 
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button(f"✅ Approve", key=f"approve_{op['id']}"):
-                        result = approve(op["id"])
-                        if result.get("success"):
-                            st.success(f"Executed! {json.dumps({k: v for k, v in result.items() if k != 'success'})}")
-                        else:
-                            st.error(f"Failed: {result.get('error', 'Unknown')}")
-                        st.rerun()
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav", mode='wb') as f:
+                        f.write(audio_bytes)
+                        temp_path = f.name
 
-                with col2:
-                    reason = st.selectbox("Reject reason:", REJECT_REASONS, key=f"reason_{op['id']}")
-                    reason_text = st.text_input("Details:", key=f"reason_text_{op['id']}")
-                    if st.button(f"❌ Reject", key=f"reject_{op['id']}"):
-                        result = reject(op["id"], reason, reason_text)
-                        if result.get("success"):
-                            st.warning("Rejected and logged.")
-                        st.rerun()
+                    client = Groq()
+                    with open(temp_path, "rb") as audio_file:
+                        trans = client.audio.transcriptions.create(
+                            file=audio_file,
+                            model="whisper-large-v3-turbo"
+                        )
 
-    # All operations history
-    st.markdown("---")
-    st.subheader("Operation History")
-    all_ops = get_all_ops()
-    if all_ops:
-        for op in all_ops:
-            status_emoji = {"pending": "🔶", "approved": "🔵", "executed": "🟢", "failed": "🔴", "rejected": "⚫"}.get(op["status"], "⚪")
-            st.markdown(f"{status_emoji} **{op['op_type']}** — {op['status']} — {op.get('created_at', '')[:19]}")
-    else:
-        st.caption("No operations recorded yet.")
+                    user_input = trans.text
+                    st.session_state["voice_history"].append({"role": "user", "text": user_input})
+
+                    result = st.session_state["voice_agent"].process_turn(user_input)
+                    st.session_state["voice_history"].append({
+                        "role": "agent",
+                        "text": result["response"],
+                        "state": result["state"]
+                    })
+
+                    if result.get("booking_code"):
+                        st.session_state["booking_context"] = st.session_state["voice_agent"].get_booking_context()
+                        speak_text(f"Booking confirmed! Your booking code is {result['booking_code']}")
+
+                    st.session_state["voice_turn_count"] += 1
+                    time.sleep(0.5)
+                    st.rerun()
+
+                except Exception as exc:
+                    st.error(f"Audio error: {str(exc)}")
+
+    # Booking confirmation
+    if "booking_context" in st.session_state:
+        bc = st.session_state["booking_context"]
+        st.markdown("---")
+        st.success("✅ Booking Confirmed!")
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Booking Code", bc.get("booking_code", "N/A"))
+        with col2:
+            st.metric("Topic", bc.get("topic", "N/A"))
+        with col3:
+            slot = bc.get("slot", {})
+            st.metric("Date", slot.get("date", "N/A"))
+
+        st.markdown("### ✉️ Action Required: Enter Your Email")
+        st.caption("Your email will be shared with the advisor for meeting confirmation. No PII was collected during the call.")
+
+        user_email = st.text_input(
+            "Email address:",
+            key="booking_email",
+            placeholder="your.email@example.com"
+        )
+        if st.button("📧 Complete Booking", type="primary", use_container_width=True):
+            if user_email and "@" in user_email:
+                st.session_state["booking_context"]["user_email"] = user_email
+                st.success(f"✅ Email saved: {user_email}")
+                st.info("💡 Go to **Action Approval** tab to submit this booking to the advisor.")
+                st.balloons()
+            else:
+                st.error("❌ Please enter a valid email address")
+
+    if st.button("🔄 Start New Conversation", use_container_width=True):
+        for key in ["voice_agent", "voice_history", "booking_context", "voice_turn_count"]:
+            st.session_state.pop(key, None)
+        st.rerun()

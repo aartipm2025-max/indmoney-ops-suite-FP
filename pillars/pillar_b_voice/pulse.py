@@ -136,7 +136,7 @@ def generate_pulse(
     user_message = _build_user_message(top_themes, total_reviews, date_range)
 
     # Use fast model for pulse (8B is sufficient, 3x faster than 70B)
-    client = LLMClient(model="fast")  # 8B instead of 70B
+    client = LLMClient()  # 8B instead of 70B
 
     # --- First attempt ---
     try:

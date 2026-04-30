@@ -165,7 +165,6 @@ class VoiceAgent:
                     f"  Topic: {self.topic}\n"
                     f"  Date: {slot['date']} at {slot['time']}\n"
                     f"  Advisor: {slot['advisor']}\n\n"
-                    f"Please complete your details at: https://indmoney.com/advisor-booking/{self.booking_code}\n"
                     f"No personal information was collected during this call."
                 )
                 next_state = VoiceState.BOOKED
