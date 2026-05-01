@@ -1,170 +1,410 @@
-# Architecture
+# System Architecture
 
-## System Diagram
+## Overview
 
-```mermaid
-flowchart LR
-    subgraph UI["Streamlit UI (ui/)"]
-        T1[RAG Tab]
-        T2[Pulse Tab]
-        T3[Voice Tab]
-        T4[HITL Tab]
-        T5[Evals Tab]
-    end
+The INDmoney Investor Ops & Intelligence Suite is organised as three independent functional pillars sharing a common core layer. Each pillar owns its own data, logic, and UI tab. The core layer provides LLM access, logging, exception handling, and schema contracts used across all pillars.
 
-    subgraph Pillars["Pillars (pillars/)"]
-        PA[Pillar A — Knowledge\nRAG Answerer]
-        PB[Pillar B — Pulse\nTrend + Summariser]
-        PC[Pillar C — Voice + HITL\nBriefing + Outbox]
-    end
-
-    subgraph Core["Core Layer (core/)"]
-        LLM[LLMClient\nGroq wrapper]
-        INS[InstructorClients\nStructured output]
-        LOG[Logger\nloguru]
-        ERR[ErrorLogger\nstructured errors]
-        CTX[RequestContext\nContextVar tracing]
-        EXC[Exceptions\nhierarchy]
-    end
-
-    subgraph Storage["Storage"]
-        CHR[(ChromaDB\nvector store)]
-        BM25[(BM25 index\nin-memory)]
-        SQLITE[(SQLite\noutbox + state)]
-        DISK[(DiskCache\nLLM response cache)]
-    end
-
-    subgraph Google["Google APIs"]
-        GCAL[Google Calendar]
-        GMAIL[Gmail]
-        GDRIVE[Google Drive]
-    end
-
-    subgraph Config["Config"]
-        CFG[config.py\npydantic-settings]
-        ENV[.env]
-    end
-
-    T1 --> PA
-    T2 --> PB
-    T3 --> PC
-    T4 --> PC
-    T5 --> EVL[evals/run_evals.py]
-
-    PA --> LLM
-    PA --> CHR
-    PA --> BM25
-    PB --> LLM
-    PB --> SQLITE
-    PC --> LLM
-    PC --> SQLITE
-    PC --> GCAL
-    PC --> GMAIL
-
-    LLM --> Core
-    INS --> Core
-    Core --> LOG
-    Core --> ERR
-    Core --> CTX
-    Core --> EXC
-
-    CFG --> ENV
-    LLM --> CFG
-    PA --> CFG
-    PB --> CFG
-    PC --> CFG
+```
+User (Browser)
+     │
+     ▼
+Streamlit App (app.py)
+     │
+     ├── Tab A: Ask Funds ──────────► Pillar A (Knowledge Base / RAG)
+     ├── Tab B: Weekly Pulse ───────► Pillar B (Review Intelligence)
+     ├── Tab C: Voice Scheduler ────► Pillar B (Voice Agent)
+     ├── Tab D: Action Approval ────► Pillar C (HITL Ops)
+     └── Tab E: Evals ─────────────► evals/ (eval framework)
 ```
 
 ---
 
-## Data Flow
+## Pillar A — Knowledge Base (RAG)
 
-### Flow 1: KB Query → Cited Answer (Pillar A)
+### Data Flow
+
 ```
-User query (text)
-  → RequestContext: assign request_id
-  → Router: classify as factsheet / fee / comparison
-  → Hybrid Retrieval: BM25 candidates ∪ ChromaDB vector candidates (top-K each)
-  → Cross-encoder reranker: score and sort, keep top-3
-  → Answerer prompt: system guard (no investment advice) + chunks + query
-  → LLMClient.chat() → Groq API → raw answer
-  → Post-processor: enforce 6-bullet format, inject [source:X] tags
-  → Return to UI
+User query (natural language)
+        │
+        ▼
+┌─────────────────────────────────┐
+│         Safety Layer            │
+│  safety.py :: check_safety()    │
+│                                 │
+│  1. Regex: investment advice?   │  ──► {"safe": False} → refuse immediately
+│  2. Regex: PII request?         │      (zero LLM cost)
+└──────────────┬──────────────────┘
+               │ safe
+               ▼
+┌─────────────────────────────────┐
+│         Query Router            │
+│  router.py :: route_query()     │
+│                                 │
+│  1. Safety re-check (backup)    │
+│  2. Regex: fee_only / fact_only │  ──► "refuse" / "fact_only" / "fee_only" / "both"
+│  3. LLM fallback (Groq fast)    │
+└──────────────┬──────────────────┘
+               │ route
+               ▼
+┌─────────────────────────────────┐
+│       Hybrid Retriever          │
+│  retriever.py :: retrieve()     │
+│                                 │
+│  ┌──────────┐  ┌─────────────┐  │
+│  │  BM25    │  │  ChromaDB   │  │
+│  │ (sparse) │  │  (dense)    │  │
+│  │ bm25s    │  │ BAAI/bge-sm │  │
+│  └────┬─────┘  └──────┬──────┘  │
+│       │  RRF fusion   │         │
+│       └───────┬───────┘         │
+│           top-k chunks          │
+└──────────────┬──────────────────┘
+               │
+               ▼
+┌─────────────────────────────────┐
+│       Cross-Encoder Reranker    │
+│  reranker.py :: rerank()        │
+│  ms-marco-MiniLM-L-6-v2        │
+│  max_len=256, top_k=3           │
+└──────────────┬──────────────────┘
+               │ reranked chunks
+               ▼
+┌─────────────────────────────────┐
+│         LLM Answerer            │
+│  answerer.py :: answer()        │
+│  Groq llama-3.1-8b-instant     │
+│  temperature=0, max_tokens=600  │
+│                                 │
+│  Output: 6 grounded bullets     │
+│  Each: fact + [source:doc_id]   │
+│                                 │
+│  Validation: has bullets?       │
+│             has [source:] tags? │
+└──────────────┬──────────────────┘
+               │
+               ▼
+         dict response:
+         {refused, bullets,
+          route, model_name,
+          request_id}
 ```
 
-### Flow 2: Reviews CSV → Weekly Pulse (Pillar B)
+### Indexing Pipeline
+
 ```
-CSV upload (300 rows, 2 weeks)
-  → PII redaction: names → [REDACTED]
-  → Text normalisation + deduplication
-  → BM25 / embedding clustering → top-3 theme labels (LLM)
-  → Trend detection: compare cluster sizes vs. prior 2-week window in SQLite
-  → Pulse generator: ≤250 words, exactly 3 actions, trend arrows
-  → Store pulse + metadata in SQLite
-  → Return pulse to UI (< 60s total)
+data/factsheets/markdown/ + data/fees/
+           │
+           ▼
+    chunker.py (MarkdownChunker)
+    Split on ## headers, parse YAML frontmatter
+    Adds: doc_id, source_file, chunk_index
+           │
+           ├──► ChromaDB (PersistentClient)
+           │    Collection: "sbi_mf_knowledge"
+           │    Embedding: BAAI/bge-small-en-v1.5
+           │
+           └──► BM25 index (bm25s)
+                Saved: data/bm25_index/
+                Files: corpus.mmindex.json,
+                       params.index.json,
+                       vocab.index.json
 ```
 
-### Flow 3: Voice Briefing → HITL → Google APIs (Pillar C)
+### Retrieval Fusion (RRF)
+
+Reciprocal Rank Fusion combines BM25 rank and ChromaDB rank:
+
 ```
-Advisor initiates call prep
-  → Load customer segment + top themes from SQLite
-  → Voice briefing generator: spoken opening with top theme
-  → Post-call: Advisor triggers follow-up workflow
-  → Gmail draft generator → store draft in SQLite outbox (status=PENDING)
-  → Calendar hold generator → store hold in SQLite outbox (status=PENDING)
-  → HITL UI: Advisor reviews both artifacts, edits if needed, clicks Approve
-  → On approval: Gmail API create draft + Calendar API create event
-  → Update outbox status=SENT / CREATED
-  → Log to system_errors.log if any API call fails
+score(d) = 1 / (60 + r_bm25(d))  +  1 / (60 + r_dense(d))
 ```
+
+Top-10 fused results are re-ranked by the cross-encoder to yield the final top-3.
+
+---
+
+## Pillar B — Review Intelligence & Voice Agent
+
+### Review → Pulse Pipeline
+
+```
+Google Play Store (id=in.indwealth)
+           │
+           ▼ scripts/scrape_reviews.py
+data/reviews/raw/indmoney_playstore_raw.json
+           │
+           ▼ scripts/clean_reviews.py
+Cleaned DataFrame (reviews.csv)
+           │
+     ┌─────┴──────┐
+     ▼            ▼
+themes.py     trends.py
+(LLM)         (pandas+scipy)
+     │            │
+     │  batch 100 reviews
+     │  Map: fast LLM → ≤5 themes/batch
+     │  Reduce: merge similar, sum counts
+     │            │
+     └─────┬──────┘
+           │ themes + week-over-week deltas
+           ▼
+        pulse.py
+        LLM (primary: llama-3.3-70b-versatile)
+        Pydantic-validated:
+          - summary ≤250 words
+          - actions = exactly 3
+           │
+           ▼
+        Pulse dict → stored in st.session_state
+```
+
+### Voice Agent State Machine
+
+```
+GREETING
+    │ any input
+    ▼
+DISCLAIMER  ←────────────────────────┐
+    │ "yes" / "I agree"              │
+    ▼                                │
+TOPIC_SELECT                         │
+    │ user picks 1–5                 │
+    ▼                                │
+TIME_PREFERENCE                      │
+    │ "morning" / "afternoon" / etc. │
+    ▼                                │
+SLOT_OFFER                           │
+    │ user confirms / picks slot     │
+    ▼                                │
+CONFIRMATION                         │
+    │ "yes" confirms                 │ "no" re-starts
+    ▼                                │
+BOOKED ──────────────────────────────┘
+    (generates booking code IND-{THEME}-{DATE}-{SEQ})
+    (pushes 3 ops to HITL queue: Calendar + Email + Doc)
+```
+
+Booking code example: `IND-TECH-20260501-001`
+
+Topic options: KYC/Onboarding · SIP/Mandates · Statements/Tax · Withdrawals · Account Changes
+
+---
+
+## Pillar C — HITL Operations
+
+### Approval Flow
+
+```
+Booking completed (Voice Agent)
+           │
+           ▼
+mcp_tools.py
+  create_calendar_hold()   ──┐
+  create_email_draft()    ──┤──► 3 PendingOp records inserted
+  create_doc_append()     ──┘    into data/hitl_queue.db (WAL mode)
+
+           │  (Tab D renders pending ops on load)
+           ▼
+Human reviews in Streamlit UI
+           │
+    ┌──────┴────────┐
+    ▼               ▼
+  Approve         Reject
+    │               │
+    ▼               │
+Google API calls:   │
+  Calendar.insert() │
+  Gmail.create()    │
+  Docs.batchUpdate()│
+    │               │
+    ▼               ▼
+status="executed"  status="rejected"
+                   reason + detail stored
+```
+
+### HITL Queue Schema
+
+```sql
+CREATE TABLE pending_ops (
+    id               TEXT PRIMARY KEY,
+    op_type          TEXT NOT NULL,       -- calendar_hold|email_draft|doc_append
+    status           TEXT NOT NULL DEFAULT 'pending',
+    payload_json     TEXT NOT NULL,
+    idempotency_key  TEXT UNIQUE,         -- booking_code scoped
+    created_at       TEXT NOT NULL,
+    approved_at      TEXT,
+    executed_at      TEXT,
+    retry_count      INTEGER DEFAULT 0,
+    last_error       TEXT
+);
+```
+
+State transitions: `pending → approved → executed` or `pending → rejected`.
+
+---
+
+## Core Layer
+
+### LLM Client & Circuit Breaker
+
+```
+LLMClient.chat()
+    │
+    ├── _check_circuit()
+    │       if open → raise LLMCircuitBreakerError (no API call)
+    │
+    ├── Groq API call  timeout=30s
+    │       on APIError / RateLimitError → tenacity retry
+    │       max_attempts=3, wait=exponential(2s..10s)
+    │
+    ├── on success → _reset_failures()
+    │
+    └── on failure → _record_failure()
+            count >= 5 within 60s window?
+            → circuit opens for 30s
+```
+
+### Request Tracing
+
+The request ID propagates via Python `contextvars` through the entire call stack:
+
+```
+ask(query, request_id="a3f9c1b2")
+  → route_query()   [INFO] router: fact_only        [req=a3f9c1b2]
+  → retrieve()      [INFO] 10 chunks retrieved      [req=a3f9c1b2]
+  → answer()        [INFO] llm call llama-3.1-8b    [req=a3f9c1b2]
+```
+
+### Logging Architecture
+
+| Sink | Format | Rotation | Retention |
+|------|--------|----------|-----------|
+| `logs/app.log` | Human-readable (Loguru) | 5 MB | 5 backups |
+| `logs/app.jsonl` | JSON-line (structured) | 5 MB | 5 backups |
+| `logs/system_errors.log` | Errors only | 5 MB | 5 backups |
+| Console | Coloured Loguru | — | — |
+
+### Exception Hierarchy
+
+```
+OpsSuiteError
+├── ConfigError
+├── LLMError
+│   ├── LLMRefusalError
+│   ├── LLMCircuitBreakerError
+│   └── LLMTimeoutError
+├── RetrievalError
+├── CitationError
+├── SchemaValidationError
+├── PulseGenerationError
+├── TrendDetectionError
+├── VoiceAgentError
+├── BookingError
+├── HITLApprovalError
+├── GoogleAPIError
+├── OAuthError
+├── EvalError
+│   └── JudgeCalibrationError
+└── SafetyViolationError
+    └── PIIDetectedError
+```
+
+---
+
+## Evaluation Framework
+
+```
+scripts/run_all_evals.py
+    │
+    │  ThreadPoolExecutor(max_workers=3)   ← RAG + Safety + UX concurrent
+    │
+    ├── run_rag_eval.py
+    │       ThreadPoolExecutor(max_workers=5)
+    │       35 questions in parallel batches of 5
+    │         ask() → judge_faithfulness() + judge_relevance()
+    │         pass if both scores ≥ 0.50
+    │       → evals/rag_eval_results.json
+    │
+    ├── run_safety_eval.py
+    │       ThreadPoolExecutor(max_workers=16)
+    │       16 adversarial prompts — all parallel
+    │         safety layer short-circuits — zero LLM cost per prompt
+    │       → evals/safety_eval_results.json
+    │
+    ├── run_ux_eval.py
+    │       pulse_word_count ≤ 250
+    │       pulse_action_count = 3
+    │       voice_theme_mentioned = True
+    │       → evals/ux_eval_results.json
+    │
+    └── generate_report.py
+            → evals/EVALS.md
+```
+
+---
+
+## Security Design
+
+### Input Safety — Defence in Depth
+
+| Layer | Mechanism | API cost |
+|-------|-----------|----------|
+| 1st | `safety.py` — deterministic regex (investment advice + PII) | Zero |
+| 2nd | `router.py` — additional `refuse_patterns` backup | Zero |
+| 3rd | LLM router fallback (edge cases not caught by regex) | 1 fast call |
+| 4th | LLM answerer system prompt — safety rules embedded | Already-paying call |
+
+Inputs caught at layer 1 never touch the retriever or LLM.
+
+### Secrets Management
+
+```
+.secrets/                      ← not in git
+    google_credentials.json    ← OAuth2 client secret
+    google_token.json          ← refresh token (auto-managed)
+
+.env                           ← not in git
+    GROQ_API_KEY               ← required
+    GEMINI_API_KEY             ← optional fallback
+```
+
+`config.py` raises `ConfigError` at startup if `GROQ_API_KEY` is absent or still the template placeholder.
+
+---
+
+## Performance Optimisations
+
+| Optimisation | Location | Effect |
+|-------------|----------|--------|
+| `@st.cache_resource` on HybridRetriever | `answerer.py` | Model loads once per process |
+| `@st.cache_resource` on CrossEncoderReranker | `answerer.py` | Avoids repeated init |
+| `@lru_cache(maxsize=1)` on KnowledgeAnswerer | `answerer.py` | Singleton Groq client |
+| `ThreadPoolExecutor(max_workers=5)` | `run_rag_eval.py` | ~30 s vs ~210 s sequential |
+| `ThreadPoolExecutor(max_workers=16)` | `run_safety_eval.py` | All 16 prompts fully parallel |
+| 3-eval concurrent run | `run_all_evals.py` | RAG + Safety + UX overlap |
+| BM25 index persisted to disk | `data/bm25_index/` | No re-tokenisation on startup |
+| ChromaDB persistent client | `data/chroma_db/` | Embeddings survive restarts |
+| Regex safety before LLM | `safety.py` | Adversarial inputs cost zero tokens |
+| `temperature=0` everywhere | `answerer.py`, `llm_judge.py` | Deterministic, reproducible eval scores |
 
 ---
 
 ## Component Map
 
-| File / Directory | Responsibility | Phase Built |
+| File / Directory | Responsibility | Phase |
 |---|---|---|
 | `config.py` | Typed settings, env loading, path constants | 0 |
-| `core/exceptions.py` | Domain exception hierarchy | 0 |
+| `core/exceptions.py` | 15-class domain exception hierarchy | 0 |
 | `core/request_context.py` | ContextVar request-ID tracing | 0 |
 | `core/logger.py` | Loguru console + file + JSONL sinks | 0 |
 | `core/error_logger.py` | Structured error log writer | 0 |
 | `core/llm_client.py` | Groq wrapper with retry + circuit breaker | 0 |
 | `core/instructor_clients.py` | Instructor-patched structured-output clients | 0 |
-| `schemas/` | Pydantic schema contracts for all pillars | 1 |
-| `pillars/pillar_a_knowledge/` | Hybrid retrieval + rerank + answerer | 2–4 |
-| `pillars/pillar_b_voice/` | Pulse, trend detection, weekly summary | 5–6 |
-| `pillars/pillar_c_hitl/` | Voice briefing, HITL outbox, Google API calls | 7 |
-| `evals/` | Eval harness, golden dataset, judge | 8–9 |
-| `ui/` | Streamlit tabs for all pillars | 3, 6, 7, 9 |
-| `data/` | Factsheets, fees, ChromaDB, SQLite | 2+ |
-| `logs/` | App logs, JSONL, structured error log | 0 |
-| `docs/` | Design docs | 0.5 |
-
----
-
-## Production Swap Paths (Documented, Not Built)
-
-These are identified upgrade paths for when the project outgrows its solo-dev / free-tier constraints. None are implemented in the 9-day build.
-
-### Streamlit monolith → FastAPI backend + frontend split
-Extract all pillar logic into FastAPI route handlers. Replace Streamlit with a React or Next.js frontend. Retain the same core/ layer unchanged. Migration effort: ~3 days. Benefit: horizontal scaling, API versioning, proper auth middleware.
-
-### SQLite outbox → Redis + Celery workers
-Replace the SQLite PENDING/SENT outbox pattern with a Redis queue and Celery worker pool. Enables durable async execution, retries with backoff, and dead-letter queues for failed Google API calls. Migration effort: ~2 days. Benefit: fault-tolerant background processing.
-
-### Single-hop RAG → Multi-hop query decomposition
-Add a query decomposition layer before retrieval: complex questions are split into 2–3 sub-questions, each answered independently, then synthesised. Requires a planning LLM call and answer merger. Migration effort: ~1.5 days. Benefit: significantly higher faithfulness on multi-fund comparison queries.
-
-### OAuth desktop flow → Streamlit st.login() OIDC
-Replace the local `credentials.json` + browser-redirect OAuth flow with Streamlit's native OIDC login (`st.login()`), planned for Streamlit 1.x. Enables proper multi-user auth without managing token files. Migration effort: ~0.5 days once Streamlit ships the feature. Already planned for Phase 5 if available.
-
----
-
-## Non-Goals (Explicit)
-
-- **No multi-user authentication**: single user, single Streamlit session. No auth middleware, no session tokens, no user database.
-- **No production scale**: designed for one analyst and one advisor running queries sequentially. No concurrency guarantees.
-- **No real voice telephony**: voice call briefing is text-simulated. No Twilio, no WebRTC, no audio processing.
-- **No continuous deployment pipeline**: no GitHub Actions CI, no Docker, no cloud deployment in scope. Stretch goal only for Day 8.
-- **No billing or payment integration**: all API usage is on free tiers. No metering, no cost tracking.
+| `schemas/` | Pydantic v2 contracts for all pillars (78 tests) | 1 |
+| `pillars/pillar_a_knowledge/` | Safety + router + hybrid retrieval + reranker + answerer | 2–4 |
+| `pillars/pillar_b_voice/` | Review ingestion + theme extraction + trend detection + pulse + voice FSM | 4–6 |
+| `pillars/pillar_c_hitl/` | HITL queue + Google APIs + MCP tools + briefing cards | 5–7 |
+| `evals/` | Eval harness, golden + adversarial datasets, LLM judge | 8–9 |
+| `ui/` | Streamlit tabs for all five pillars | 3, 6, 7, 9 |
+| `data/` | Factsheets, fees, ChromaDB, BM25 index, SQLite DBs | 2+ |
+| `logs/` | app.log, app.jsonl, system_errors.log | 0 |
+| `docs/` | ARCHITECTURE.md, SOURCES.md, design docs | 0.5, 10 |
