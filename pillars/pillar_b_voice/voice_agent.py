@@ -40,11 +40,18 @@ THEME_CODES = {
     "default": "GENR",
 }
 
-MOCK_SLOTS = [
-    {"date": "2026-04-28", "time": "10:00 AM IST", "advisor": "Advisor A"},
-    {"date": "2026-04-28", "time": "02:30 PM IST", "advisor": "Advisor B"},
-    {"date": "2026-04-29", "time": "11:00 AM IST", "advisor": "Advisor A"},
-]
+def _future_slots() -> list[dict]:
+    from datetime import timedelta
+    today = datetime.now(timezone.utc)
+    d1 = (today + timedelta(days=1)).strftime("%Y-%m-%d")
+    d2 = (today + timedelta(days=2)).strftime("%Y-%m-%d")
+    return [
+        {"date": d1, "time": "10:00 AM IST", "advisor": "Advisor A"},
+        {"date": d1, "time": "02:30 PM IST", "advisor": "Advisor B"},
+        {"date": d2, "time": "11:00 AM IST", "advisor": "Advisor A"},
+    ]
+
+MOCK_SLOTS = _future_slots()
 
 
 class VoiceAgent:

@@ -12,60 +12,63 @@ def render_tab_d():
 
     from pillars.pillar_c_hitl.approval import get_pending_ops, get_all_ops, approve, reject, REJECT_REASONS
 
-    # Check for completed booking from Voice tab
+    # Auto-submit booking to queue the moment this tab loads — no button needed.
+    # submitted_bookings tracks which codes have been queued to prevent double-submit.
+    if "submitted_bookings" not in st.session_state:
+        st.session_state["submitted_bookings"] = set()
+
     if "booking_context" in st.session_state and "pulse" in st.session_state:
         bc = st.session_state["booking_context"]
         pulse = st.session_state["pulse"]
         booking_code = bc.get("booking_code", "N/A")
 
-        st.success(f"📋 New booking ready: **{booking_code}**")
-
-        if st.button("🚀 Submit Calendar + Email + Doc to Approval Queue", type="primary", use_container_width=True, key="submit_mcp"):
+        if booking_code not in st.session_state["submitted_bookings"]:
             from pillars.pillar_c_hitl.mcp_tools import create_calendar_hold, create_email_draft, create_doc_append
             from pillars.pillar_c_hitl.briefing_card import generate_briefing_card, format_briefing_html, format_briefing_plain
             from pillars.pillar_c_hitl.approval import submit_for_approval
+            from datetime import timedelta
 
-            # Generate briefing
             card = generate_briefing_card(pulse, bc)
             html = format_briefing_html(card)
             plain = format_briefing_plain(card)
 
-            # Get slot details
             slot = bc.get("slot", {})
-            start = slot.get("date", "2026-04-28") + "T10:00:00+05:30"
-            end = slot.get("date", "2026-04-28") + "T10:30:00+05:30"
+            slot_date = slot.get("date") or (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%d")
+            slot_time_str = slot.get("time", "10:00 AM IST").replace(" IST", "").strip()
+            try:
+                from datetime import datetime as _dt, timedelta as _td
+                t = _dt.strptime(slot_time_str, "%I:%M %p")
+                start = f"{slot_date}T{t.strftime('%H:%M:%S')}+05:30"
+                end = f"{slot_date}T{(t + _td(minutes=30)).strftime('%H:%M:%S')}+05:30"
+            except Exception:
+                start = f"{slot_date}T10:00:00+05:30"
+                end = f"{slot_date}T10:30:00+05:30"
 
-            # Submit 3 MCP actions
-            op1 = submit_for_approval(create_calendar_hold(
+            submit_for_approval(create_calendar_hold(
                 f"Advisor Q&A — {bc.get('topic', 'General')} — {booking_code}",
                 f"Booking: {booking_code}\n{plain}",
                 start, end
-            ))
+            ), request_id=booking_code)
 
-            op2 = submit_for_approval(create_email_draft(
+            submit_for_approval(create_email_draft(
                 ["advisor@indmoney.demo"],
                 f"Weekly Pulse + Briefing [{booking_code}]",
                 html, plain, booking_code
-            ))
+            ), request_id=booking_code)
 
-            op3 = submit_for_approval(create_doc_append(
+            submit_for_approval(create_doc_append(
                 "Advisor Pre-Bookings",
                 f"Date: {datetime.now(timezone.utc).isoformat()}\nBooking: {booking_code}\n{plain}",
                 booking_code
-            ))
+            ), request_id=booking_code)
 
-            st.success(f"✅ 3 actions submitted to queue!")
-            st.balloons()
-            st.rerun()
+            st.session_state["submitted_bookings"].add(booking_code)
+            st.toast(f"📋 Booking {booking_code} sent to approval queue", icon="✅")
 
     elif "booking_context" in st.session_state and "pulse" not in st.session_state:
         st.warning("⚠️ Booking found but no pulse data. Generate pulse first in **Weekly Pulse** tab.")
-
-    elif "pulse" in st.session_state and "booking_context" not in st.session_state:
-        st.info("💡 Complete a booking in **Voice Scheduler** tab to submit actions for approval.")
-
-    else:
-        st.info("💡 Generate pulse and complete booking to see approval actions.")
+    elif "pulse" not in st.session_state and "booking_context" not in st.session_state:
+        st.info("💡 Generate pulse and complete a booking to see approval actions here.")
 
     st.markdown("---")
 

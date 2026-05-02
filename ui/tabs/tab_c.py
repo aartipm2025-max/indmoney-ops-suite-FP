@@ -143,6 +143,7 @@ def render_tab_c():
                     st.session_state["booking_context"] = st.session_state["voice_agent"].get_booking_context()
                     speak_text(f"Booking confirmed! Your booking code is {result['booking_code']}")
                 st.session_state["voice_turn_count"] += 1
+                st.session_state.pop("voice_text_input", None)
                 time.sleep(0.5)
                 st.rerun()
 

@@ -1,0 +1,282 @@
+[
+  {
+    "id": "Q001",
+    "question": "What is the exit load for SBI Bluechip Fund?",
+    "type": "fact_only",
+    "faithfulness_score": 1.0,
+    "relevance_score": 1.0,
+    "status": "pass"
+  },
+  {
+    "id": "Q002",
+    "question": "What is the exit load for the ELSS fund and why is there no exit load?",
+    "type": "combined",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q003",
+    "question": "What is the expense ratio of SBI Small Cap Fund?",
+    "type": "fact_only",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q004",
+    "question": "What is the minimum SIP for SBI ELSS Tax Saver Fund?",
+    "type": "fact_only",
+    "faithfulness_score": 1.0,
+    "relevance_score": 1.0,
+    "status": "pass"
+  },
+  {
+    "id": "Q005",
+    "question": "Who is the fund manager of SBI Midcap Fund?",
+    "type": "fact_only",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q006",
+    "question": "What is exit load and how is it calculated?",
+    "type": "fee_only",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q007",
+    "question": "What is the benchmark for SBI Large Cap Fund?",
+    "type": "fact_only",
+    "faithfulness_score": 1.0,
+    "relevance_score": 1.0,
+    "status": "pass"
+  },
+  {
+    "id": "Q008",
+    "question": "What is the exit load for SBI Equity Hybrid Fund and when is it applicable?",
+    "type": "combined",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q009",
+    "question": "What are the top holdings of SBI Bluechip Fund?",
+    "type": "fact_only",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q010",
+    "question": "What is the taxation on ELSS fund redemptions?",
+    "type": "fact_only",
+    "faithfulness_score": 0.5,
+    "relevance_score": 1.0,
+    "status": "pass"
+  },
+  {
+    "id": "Q011",
+    "question": "What is the minimum lumpsum investment for SBI Small Cap Fund?",
+    "type": "fact_only",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q012",
+    "question": "How does exit load work and what is the exit load for SBI Midcap Fund?",
+    "type": "combined",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q013",
+    "question": "What is the AUM of SBI Equity Hybrid Fund?",
+    "type": "fact_only",
+    "faithfulness_score": 1.0,
+    "relevance_score": 1.0,
+    "status": "pass"
+  },
+  {
+    "id": "Q014",
+    "question": "What is the risk rating of SBI ELSS Tax Saver Fund?",
+    "type": "fact_only",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q015",
+    "question": "Explain exit load and tell me the exit load structure for all SBI funds.",
+    "type": "combined",
+    "faithfulness_score": 0.5,
+    "relevance_score": 0.5,
+    "status": "pass"
+  },
+  {
+    "id": "Q016",
+    "question": "What is the inception date of SBI Bluechip Fund?",
+    "type": "fact_only",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q017",
+    "question": "What is the NAV of SBI Small Cap Fund?",
+    "type": "fact_only",
+    "faithfulness_score": 1.0,
+    "relevance_score": 1.0,
+    "status": "pass"
+  },
+  {
+    "id": "Q018",
+    "question": "What edge cases exist with exit loads?",
+    "type": "fee_only",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q019",
+    "question": "Compare the expense ratios of SBI Bluechip and SBI Small Cap Funds.",
+    "type": "fact_only",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q020",
+    "question": "What is the investment objective of SBI Midcap Fund?",
+    "type": "fact_only",
+    "faithfulness_score": 1.0,
+    "relevance_score": 1.0,
+    "status": "pass"
+  },
+  {
+    "id": "Q021",
+    "question": "What are the regulatory references for exit load?",
+    "type": "fee_only",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q022",
+    "question": "What is the difference between Regular and Direct plans for SBI Equity Hybrid Fund?",
+    "type": "fact_only",
+    "faithfulness_score": 1.0,
+    "relevance_score": 1.0,
+    "status": "pass"
+  },
+  {
+    "id": "Q023",
+    "question": "How is exit load charged and what is it for SBI ELSS fund?",
+    "type": "combined",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q024",
+    "question": "What category does SBI Bluechip Fund belong to?",
+    "type": "fact_only",
+    "faithfulness_score": 1.0,
+    "relevance_score": 1.0,
+    "status": "pass"
+  },
+  {
+    "id": "Q025",
+    "question": "What is the exit load timeline for SBI Small Cap Fund?",
+    "type": "fact_only",
+    "faithfulness_score": 1.0,
+    "relevance_score": 1.0,
+    "status": "pass"
+  },
+  {
+    "id": "Q026",
+    "question": "Explain who is involved in the exit load process.",
+    "type": "fee_only",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q027",
+    "question": "What is the minimum additional purchase for SBI Midcap Fund?",
+    "type": "fact_only",
+    "faithfulness_score": 0.0,
+    "relevance_score": 1.0,
+    "status": "fail"
+  },
+  {
+    "id": "Q028",
+    "question": "What is the worked example of exit load calculation?",
+    "type": "fee_only",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q029",
+    "question": "What are the top 3 sectors in SBI Equity Hybrid Fund holdings?",
+    "type": "fact_only",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q030",
+    "question": "How does the 3-year ELSS lock-in affect exit load?",
+    "type": "combined",
+    "faithfulness_score": 1.0,
+    "relevance_score": 1.0,
+    "status": "pass"
+  },
+  {
+    "id": "Q031",
+    "question": "What is the benchmark and category of SBI Small Cap Fund?",
+    "type": "fact_only",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q032",
+    "question": "Compare minimum SIP investments across all 5 SBI funds.",
+    "type": "fact_only",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.5,
+    "status": "fail"
+  },
+  {
+    "id": "Q033",
+    "question": "What is the NAV and AUM of SBI Midcap Fund?",
+    "type": "fact_only",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q034",
+    "question": "Explain exit load calculation and give examples from SBI Bluechip and Midcap Funds.",
+    "type": "combined",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  },
+  {
+    "id": "Q035",
+    "question": "What taxation applies to SBI Equity Hybrid Fund redemptions?",
+    "type": "fact_only",
+    "status": "error",
+    "faithfulness_score": 0.0,
+    "relevance_score": 0.0
+  }
+]
