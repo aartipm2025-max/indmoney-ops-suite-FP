@@ -76,30 +76,38 @@ class KnowledgeAnswerer:
             f"[doc_id={ch['doc_id']}] {ch['text']}" for ch in chunks
         )
 
-        system_prompt = f"""You are a facts-only mutual fund assistant for SBI Mutual Fund schemes.
-You answer questions using ONLY the provided source documents.
+        system_prompt = f"""You are a FACTS-ONLY mutual fund assistant for SBI Mutual Fund schemes.
 
-CRITICAL RULES:
-1. Answer in EXACTLY 6 bullet points.
-2. Answer ONLY what the user asked. Do NOT include information about other funds unless explicitly asked for comparison.
-3. If the user asks about "SBI Bluechip Fund", answer ONLY about SBI Bluechip Fund. Do NOT mention SBI Midcap, SBI Small Cap, or other funds.
-4. Each bullet must have [source:doc_id] at the END of the sentence, not inline.
-5. Only cite doc_ids that appear in the provided chunks.
-6. Stay strictly within the provided text.
-7. Never give investment advice, recommendations, or predictions.
-8. Never disclose PII.
-9. Keep each bullet to 1-2 sentences maximum.
-10. If you only have 3-4 relevant facts, repeat or rephrase key information to reach exactly 6 bullets. DO NOT add information from other funds to fill space.
+CRITICAL SAFETY RULES (NEVER VIOLATE):
+1. REFUSE all investment advice requests (buy/sell/recommend/predict/best/should I)
+2. REFUSE all PII requests (emails/phone numbers/account details/PAN/Aadhaar)
+3. If query asks for advice or PII, respond: "I cannot provide investment advice. I only share factual information from official sources."
 
-Available source documents:
+STRICT GROUNDING RULES (CRITICAL):
+1. You are FORBIDDEN from using ANY knowledge outside the provided source documents
+2. If a fact is NOT explicitly stated in the sources below, DO NOT include it
+3. Do NOT infer, deduce, or assume anything beyond what sources say
+4. Do NOT use general knowledge about mutual funds, finance, or SBI
+5. If sources are insufficient, say: "This information is not in the provided sources"
+6. Every single fact MUST have a [source:doc_id] citation
+7. If you're unsure whether a fact is in sources, DON'T include it
+
+ANSWER FORMAT:
+1. Provide EXACTLY 6 bullet points
+2. Each bullet: one factual statement from sources
+3. Cite sources as [source:doc_id] at the END of each bullet
+4. Answer ONLY what user asked - do NOT add info about other funds
+5. If user asks about "SBI Bluechip Fund", answer ONLY about that fund
+
+SOURCE DOCUMENTS:
 {formatted_chunks}
 
-User question: {query}
+USER QUESTION: {query}
 
-Format each bullet as:
-- The fact in plain text [source:doc_id]
+Generate 6 bullets. Each bullet format:
+- The fact from sources [source:doc_id]
 
-All sources will be displayed separately at the end, so DO NOT group them after each bullet.
+STOP after 6 bullets. Do not add disclaimers or extra information.
 """
 
         print("[DEBUG] Calling LLM")
@@ -127,6 +135,33 @@ All sources will be displayed separately at the end, so DO NOT group them after 
             ]
             bullets = [{"text": line, "sources": []} for line in bullet_lines if line]
 
+            # Output validation — must have at least one bullet
+            if not bullets:
+                return {
+                    "refused": False,
+                    "error": True,
+                    "message": "Answer generation failed validation — no bullets produced",
+                    "query": query,
+                    "route": route,
+                    "bullets": [],
+                    "model_name": _MODEL,
+                    "request_id": request_id,
+                }
+
+            # Warn if no bullets contain source citations
+            has_any_source = any("[source:" in b["text"] for b in bullets)
+            if not has_any_source:
+                return {
+                    "refused": False,
+                    "error": True,
+                    "message": "Answer missing source citations",
+                    "query": query,
+                    "route": route,
+                    "bullets": [],
+                    "model_name": _MODEL,
+                    "request_id": request_id,
+                }
+
             return {
                 "refused": False,
                 "error": False,
@@ -151,6 +186,21 @@ All sources will be displayed separately at the end, so DO NOT group them after 
 
 
 def ask(query: str, request_id: str | None = None):
+    # HARD SAFETY CHECK — first line of defense before any LLM call
+    from pillars.pillar_a_knowledge.safety import check_safety
+    safety_result = check_safety(query)
+    if not safety_result["safe"]:
+        return {
+            "refused": True,
+            "error": False,
+            "message": safety_result["message"],
+            "query": query,
+            "route": "refuse",
+            "bullets": [],
+            "model_name": "safety_layer",
+            "request_id": request_id or uuid.uuid4().hex[:8],
+        }
+
     req_id = request_id or uuid.uuid4().hex[:8]
 
     try:
