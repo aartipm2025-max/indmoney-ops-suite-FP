@@ -20,7 +20,19 @@
       "Bash(git -C \"/c/FINAL CAPSTONE PROJECT\" log --oneline --all)",
       "Bash(PYTHONPATH=\"C:/FINAL CAPSTONE PROJECT\" uv run python scripts/scrape_reviews.py)",
       "Bash(python *)",
-      "Bash(Get-Content \"C:\\\\Users\\\\Admin\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--FINAL-CAPSTONE-PROJECT\\\\dca01d81-4476-432a-a54b-e4ad645a6bcb\\\\tasks\\\\bejw1xso5.output\" -Wait)"
+      "Bash(Get-Content \"C:\\\\Users\\\\Admin\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--FINAL-CAPSTONE-PROJECT\\\\dca01d81-4476-432a-a54b-e4ad645a6bcb\\\\tasks\\\\bejw1xso5.output\" -Wait)",
+      "Bash(echo \"EXIT:$?\")",
+      "PowerShell(head *)",
+      "PowerShell(cd \"C:\\\\FINAL CAPSTONE PROJECT\"; git diff HEAD -- pillars/pillar_a_knowledge/answerer.py | Select-Object -First 80)",
+      "PowerShell(cd \"C:\\\\FINAL CAPSTONE PROJECT\"; git diff HEAD -- schemas/rag.py)",
+      "PowerShell(cd \"C:\\\\FINAL CAPSTONE PROJECT\"; git diff HEAD -- tests/test_p1_schemas.py | Select-Object -First 60)",
+      "Bash(uv pip *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'docs\\(phase-10\\): production documentation *)",
+      "Bash(git tag *)",
+      "Bash(git commit *)"
     ]
   }
 }

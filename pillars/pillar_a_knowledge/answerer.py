@@ -8,7 +8,6 @@ from functools import lru_cache
 from pathlib import Path
 
 from core.logger import log
-from pillars.pillar_a_knowledge.reranker import CrossEncoderReranker
 from pillars.pillar_a_knowledge.retriever import HybridRetriever
 from pillars.pillar_a_knowledge.router import route_query
 
@@ -16,21 +15,14 @@ import streamlit as st
 from groq import Groq
 
 
-@st.cache_resource(show_spinner="Loading knowledge base (first time only)...")
+@st.cache_resource(show_spinner="Loading knowledge base…")
 def get_cached_retriever():
     return HybridRetriever(Path("data/chroma_db"), Path("data/bm25_index"))
 
 
-@st.cache_resource(show_spinner="Loading reranker (first time only)...")
-def get_cached_reranker():
-    return CrossEncoderReranker()
-
-
-# 🔽 FAST MODEL (IMPORTANT)
-_MODEL = "llama-3.1-8b-instant"
-
-_RERANK_CANDIDATES = 5
-_RERANK_TOP_K = 3
+_MODEL = "llama-3.1-8b-instant"   # 8B: ~6× faster than 70B, sufficient for factual answers
+_RETRIEVE_TOP_K = 5                # 5 chunks: fast retrieval, sufficient context
+_ANSWER_TOP_K = 3                  # pass top 3 to LLM
 
 _REFUSAL_MSG = (
     "I can only provide factual information from official sources. "
@@ -78,45 +70,20 @@ class KnowledgeAnswerer:
 
         system_prompt = f"""You are a FACTS-ONLY mutual fund assistant for SBI Mutual Fund schemes.
 
-CRITICAL SAFETY RULES (NEVER VIOLATE):
-1. REFUSE all investment advice requests (buy/sell/recommend/predict/best/should I)
-2. REFUSE all PII requests (emails/phone numbers/account details/PAN/Aadhaar)
-3. If query asks for advice or PII, respond: "I cannot provide investment advice. I only share factual information from official sources."
+SAFETY: Refuse investment advice (buy/sell/recommend/predict) and PII requests with: "I cannot provide investment advice."
 
-STRICT GROUNDING RULES (CRITICAL):
-1. You are FORBIDDEN from using ANY knowledge outside the provided source documents
-2. If a fact is NOT explicitly stated in the sources below, DO NOT include it
-3. Do NOT infer, deduce, or assume anything beyond what sources say
-4. Do NOT use general knowledge about mutual funds, finance, or SBI
-5. If sources are insufficient, say: "This information is not in the provided sources"
-6. Every single fact MUST have a [source:doc_id] citation
-7. If you're unsure whether a fact is in sources, DON'T include it
+GROUNDING: Use ONLY the source documents below. Every fact must cite [source:doc_id]. Never use outside knowledge. If a fact is not in sources, omit it.
 
-ANSWER FORMAT:
-1. Provide EXACTLY 6 bullet points
-2. Each bullet: one factual statement from sources
-3. Cite sources as [source:doc_id] at the END of each bullet
-4. Answer ONLY what user asked - do NOT add info about other funds
-5. If user asks about "SBI Bluechip Fund", answer ONLY about that fund
+FORMAT: Exactly 6 bullets. Each bullet: one fact + [source:doc_id]. Answer only what was asked.
 
-SOURCE DOCUMENTS:
-{formatted_chunks}
-
-USER QUESTION: {query}
-
-Generate 6 bullets. Each bullet format:
-- The fact from sources [source:doc_id]
-
-STOP after 6 bullets. Do not add disclaimers or extra information.
-"""
-
-        print("[DEBUG] Calling LLM")
+SOURCES:
+{formatted_chunks}"""
 
         try:
             resp = self._client.chat.completions.create(
                 model=_MODEL,
                 temperature=0,
-                max_tokens=600,
+                max_tokens=400,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": query},
@@ -204,31 +171,25 @@ def ask(query: str, request_id: str | None = None):
     req_id = request_id or uuid.uuid4().hex[:8]
 
     try:
-        print(f"[DEBUG] Step 1: Routing query: {query[:80]}")
-        route = route_query(query)
-        print(f"[DEBUG] Route result: {route!r}")
+        import time
+        t0 = time.perf_counter()
+
+        route = route_query(query, _safety_checked=True)   # safety already ran above
+        t1 = time.perf_counter()
+        log.info("ask: route={} ({:.2f}s) query='{}'", route, t1 - t0, query[:60])
 
         if route == "refuse":
-            print("[DEBUG] Query refused")
             return {"refused": True, "message": _REFUSAL_MSG}
 
-        print("[DEBUG] Step 2: Retrieving chunks")
-        chunks = get_cached_retriever().retrieve(query, top_k=_RERANK_CANDIDATES)
-        print(f"[DEBUG] Retrieved {len(chunks)} chunks")
+        chunks = get_cached_retriever().retrieve(query, top_k=_RETRIEVE_TOP_K)
+        t2 = time.perf_counter()
+        log.info("ask: retrieval {:.2f}s ({} chunks)", t2 - t1, len(chunks))
 
-        reranked = chunks[:_RERANK_TOP_K]
+        top_chunks = chunks[:_ANSWER_TOP_K]   # skip reranker — top-3 from hybrid RRF is sufficient
 
-        print("[DEBUG] Step 4: Generating answer")
-        result = _answerer().answer(query, reranked, route, req_id)
-        print(f"[DEBUG] Answer generated: {type(result)}")
-        print(f"[DEBUG] Answer dict keys: {list(result.keys())}")
-        print(f"[DEBUG] Has 'route': {'route' in result}")
-        print(f"[DEBUG] Has 'bullets': {'bullets' in result}")
-        print(f"[DEBUG] Has 'model_name': {'model_name' in result}")
-        if "error" in result:
-            print(f"[DEBUG] Error flag: {result.get('error')}")
-            print(f"[DEBUG] Error message: {result.get('message', 'N/A')}")
-
+        result = _answerer().answer(query, top_chunks, route, req_id)
+        t3 = time.perf_counter()
+        log.info("ask: llm {:.2f}s  total {:.2f}s", t3 - t2, t3 - t0)
         return result
 
     except Exception as exc:
@@ -246,8 +207,6 @@ def ask(query: str, request_id: str | None = None):
         }
 
 
-# ✅ REQUIRED FOR app.py
 def prewarm_knowledge_base():
     get_cached_retriever()
-    get_cached_reranker()
     _answerer()

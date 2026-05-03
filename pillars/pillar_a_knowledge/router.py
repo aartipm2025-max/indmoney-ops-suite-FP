@@ -64,17 +64,19 @@ _ROUTER_SYSTEM_PROMPT = (
 )
 
 
-def route_query(query: str) -> RouteResult:
+def route_query(query: str, _safety_checked: bool = False) -> RouteResult:
+    """Route a query. Pass _safety_checked=True if ask() already ran check_safety()."""
     preview = query[:80]
 
-    # SAFETY CHECK FIRST - hard refusal layer
-    from pillars.pillar_a_knowledge.safety import check_safety
-    safety_result = check_safety(query)
-    if not safety_result["safe"]:
-        log.info("router: query='{}...' → refuse (safety layer: {})", preview, safety_result["reason"])
-        return "refuse"
+    # Safety check — skipped when ask() already ran it to avoid duplicate work
+    if not _safety_checked:
+        from pillars.pillar_a_knowledge.safety import check_safety
+        safety_result = check_safety(query)
+        if not safety_result["safe"]:
+            log.info("router: query='{}...' → refuse (safety layer: {})", preview, safety_result["reason"])
+            return "refuse"
 
-    # Backup safety patterns (catch edge cases the safety module may miss)
+    # Compiled-regex safety backstop (cheap, catches edge cases)
     if _ADVICE_RE.search(query):
         log.info("router: query='{}...' → refuse (investment advice pattern)", preview)
         return "refuse"
@@ -84,49 +86,54 @@ def route_query(query: str) -> RouteResult:
 
     query_lower = query.lower()
 
-    # Explicit refusal patterns (additional edge cases)
-    refuse_patterns = [
+    # Additional refusal patterns (edge cases not caught by compiled regex above)
+    for pattern in (
         r'\b(should i|recommend|which.*better|predict|forecast)',
         r'\b(buy|sell|invest in|good time)',
         r'\b(email|phone|pan|aadhaar|account.*number)',
-    ]
-    for pattern in refuse_patterns:
+    ):
         if re.search(pattern, query_lower):
             log.info("router: query='{}...' → refuse (explicit pattern)", preview)
             return "refuse"
 
-    # Fee-only: fee/cost question WITHOUT a specific fund name
-    if re.search(r'\b(exit load|fee|charge|cost|expense ratio).*\b(what|how|why|calculate)', query_lower):
-        if not re.search(r'\bsbi\b|\bbluechip\b|\bsmall cap\b|\bmidcap\b|\belss\b', query_lower):
-            log.info("router: query='{}...' → fee_only (fee question, no fund name)", preview)
-            return "fee_only"
+    # ── Fast boolean routing — order-agnostic, catches ~90% of queries ──────
+    # Presence of a specific SBI fund name
+    has_fund = bool(re.search(
+        r'\b(sbi|bluechip|blue\s*chip|small\s*cap|midcap|mid\s*cap'
+        r'|equity\s+hybrid|elss|long\s+term\s+equity)\b',
+        query_lower,
+    ))
+    # Presence of any fee/cost keyword (expense ratio included)
+    has_fee = bool(re.search(
+        r'\b(exit\s+load|expense\s+ratio|redemption\s+(charge|fee)'
+        r'|fee|charge|cost|tds|stamp\s+duty)\b',
+        query_lower,
+    ))
 
-    # Fact-only: fund name present WITHOUT fee keywords
-    if re.search(r'\bsbi\b|\bbluechip\b|\bsmall cap\b|\bmidcap\b|\belss\b|\bequity hybrid\b', query_lower):
-        if not re.search(r'\bexit load\b|\bfee\b|\bcharge\b|\bcost\b', query_lower):
-            log.info("router: query='{}...' → fact_only (fund name, no fee keyword)", preview)
-            return "fact_only"
-
-    # Combined: fee keyword + fund name together
-    if re.search(r'(exit load|fee|charge).*\b(sbi|bluechip|elss|midcap|small cap)', query_lower):
-        log.info("router: query='{}...' → both (fee + fund name)", preview)
-        return "both"
-    if re.search(r'\b(sbi|bluechip|elss|midcap|small cap).*(exit load|fee|charge|why.*charged)', query_lower):
-        log.info("router: query='{}...' → both (fund name + fee)", preview)
+    if has_fund and has_fee:
+        log.info("router: query='{}...' → both (fund + fee keyword)", preview)
         return "both"
 
-    # Fall through to compiled regex stage
-    if _EXIT_LOAD_CONTEXT_RE.search(query):
-        log.info("router: query='{}...' → both (exit load + context keyword)", preview)
-        return "both"
-    if _FEE_RE.search(query):
-        log.info("router: query='{}...' → fee_only (fee keyword match)", preview)
-        return "fee_only"
-    if _FUND_NAME_RE.search(query):
-        log.info("router: query='{}...' → fact_only (fund name match)", preview)
+    if has_fund:
+        log.info("router: query='{}...' → fact_only (fund name, no fee keyword)", preview)
         return "fact_only"
 
-    # LLM fallback (only when all regex produced no match)
+    if has_fee:
+        log.info("router: query='{}...' → fee_only (fee keyword, no fund name)", preview)
+        return "fee_only"
+
+    # ── Compiled-regex fallback (catches fund/fee patterns missed above) ─────
+    if _EXIT_LOAD_CONTEXT_RE.search(query):
+        log.info("router: query='{}...' → both (exit load + context)", preview)
+        return "both"
+    if _FEE_RE.search(query):
+        log.info("router: query='{}...' → fee_only (compiled fee regex)", preview)
+        return "fee_only"
+    if _FUND_NAME_RE.search(query):
+        log.info("router: query='{}...' → fact_only (compiled fund regex)", preview)
+        return "fact_only"
+
+    # LLM fallback — only fires when query has neither fund name nor fee keyword
     log.info("router: no regex match — calling LLM for query='{}'", preview)
     client = LLMClient()
     for attempt in range(2):

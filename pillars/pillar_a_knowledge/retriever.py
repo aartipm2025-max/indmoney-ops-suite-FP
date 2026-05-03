@@ -50,7 +50,7 @@ class HybridRetriever:
     def retrieve(
         self,
         query: str,
-        top_k: int = 10,
+        top_k: int = 5,
         bm25_weight: float = 0.3,
         dense_weight: float = 0.7,
     ) -> list[dict[str, Any]]:
@@ -63,19 +63,30 @@ class HybridRetriever:
         bm25_rank_map = {doc_id: rank for rank, (doc_id, _) in enumerate(bm25_ranked, 1)}
         dense_rank_map = {doc_id: rank for rank, (doc_id, _) in enumerate(dense_ranked, 1)}
 
+        fused_ids = [doc_id for doc_id, _ in fused]
+        if not fused_ids:
+            return []
+
+        # Single batched fetch instead of one get() per document
+        batch = self.collection.get(
+            ids=fused_ids,
+            include=["documents", "metadatas"],
+        )
+        doc_lookup: dict[str, tuple[str, dict]] = {
+            did: (batch["documents"][i], batch["metadatas"][i])
+            for i, did in enumerate(batch["ids"])
+        }
+
         results: list[dict[str, Any]] = []
         for doc_id, rrf_score in fused:
-            got = self.collection.get(
-                ids=[doc_id],
-                include=["documents", "metadatas"],
-            )
-            if not got["documents"]:
+            if doc_id not in doc_lookup:
                 continue
+            text, metadata = doc_lookup[doc_id]
             results.append(
                 {
                     "doc_id": doc_id,
-                    "text": got["documents"][0],
-                    "metadata": got["metadatas"][0],
+                    "text": text,
+                    "metadata": metadata,
                     "rrf_score": rrf_score,
                     "bm25_rank": bm25_rank_map.get(doc_id),
                     "dense_rank": dense_rank_map.get(doc_id),

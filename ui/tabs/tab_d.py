@@ -7,7 +7,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 def render_tab_d():
-    st.header("✅ HITL Approval Center")
+    if "tab_d_initialized" not in st.session_state:
+        st.session_state["tab_d_initialized"] = True
+
+    st.header("Action Approval")
     st.caption("Review and approve/reject MCP actions before they execute on Google services.")
 
     from pillars.pillar_c_hitl.approval import get_pending_ops, get_all_ops, approve, reject, REJECT_REASONS
@@ -63,26 +66,32 @@ def render_tab_d():
             ), request_id=booking_code)
 
             st.session_state["submitted_bookings"].add(booking_code)
-            st.toast(f"📋 Booking {booking_code} sent to approval queue", icon="✅")
+            st.toast(f"Booking {booking_code} sent to approval queue", icon="✅")
 
     elif "booking_context" in st.session_state and "pulse" not in st.session_state:
-        st.warning("⚠️ Booking found but no pulse data. Generate pulse first in **Weekly Pulse** tab.")
+        st.warning("Booking found but no pulse data. Generate pulse first in the **Weekly Pulse** tab.")
     elif "pulse" not in st.session_state and "booking_context" not in st.session_state:
-        st.info("💡 Generate pulse and complete a booking to see approval actions here.")
+        st.markdown("""
+<div style="padding: 12px 16px; background: #F6F8FB; border-radius: 6px;
+     border: 1px solid #E8EDF3; font-size: 13px; color: #5A6C7D; margin-bottom: 16px;">
+    Complete a booking in <strong>Voice Scheduler</strong> to see approval actions here.
+</div>
+""", unsafe_allow_html=True)
 
     st.markdown("---")
 
-    st.subheader("⏳ Pending Approvals")
+    # ── Pending Approvals ─────────────────────────────────────────────────────
+    st.markdown('<div class="section-label">Pending Approvals</div>', unsafe_allow_html=True)
     pending = get_pending_ops()
 
     if not pending:
         st.markdown("""
-        <div class="empty-state">
-            <div class="empty-state-icon">✅</div>
-            <h3>All caught up!</h3>
-            <p>No pending operations requiring approval.</p>
-        </div>
-        """, unsafe_allow_html=True)
+<div class="empty-state">
+    <div class="empty-state-icon">✅</div>
+    <h3>All caught up!</h3>
+    <p>No pending operations requiring approval.</p>
+</div>
+""", unsafe_allow_html=True)
     else:
         import re
         from collections import defaultdict
@@ -113,72 +122,125 @@ def render_tab_d():
                 start_time = "N/A"
 
             st.markdown(f"""
-            <div class="hitl-op-card">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
-                    <div>
-                        <h3 style="color: #0B1F3A; margin: 0 0 8px 0;">&#x1F4C5; New Booking Request</h3>
-                        <p style="color: #5A6C7D; margin: 0;"><strong>Code:</strong> {booking_code}</p>
-                    </div>
-                    <span class="status-pending">PENDING</span>
-                </div>
-                <div style="background: #F6F8FB; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-                    <p style="margin: 4px 0;"><strong>Topic:</strong> {topic}</p>
-                    <p style="margin: 4px 0;"><strong>Scheduled:</strong> {start_time}</p>
-                    <p style="margin: 4px 0;"><strong>Actions:</strong> {len(ops)} pending (Calendar + Email + Doc)</p>
-                </div>
+<div class="hitl-op-card">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;
+         margin-bottom: 16px;">
+        <div>
+            <div style="font-size: 11px; font-weight: 700; color: #8A9BB0;
+                 letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">
+                Booking Request
             </div>
-            """, unsafe_allow_html=True)
+            <div style="font-size: 16px; font-weight: 700; color: #0B1F3A;
+                 font-family: 'SF Mono', 'Fira Code', monospace; letter-spacing: 0.04em;">
+                {booking_code}
+            </div>
+        </div>
+        <span class="status-pending">Pending Review</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;
+         background: #F6F8FB; border-radius: 6px; padding: 14px 16px;
+         border: 1px solid #E8EDF3; margin-bottom: 4px;">
+        <div>
+            <div style="font-size: 11px; color: #8A9BB0; font-weight: 700;
+                 letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 3px;">Topic</div>
+            <div style="font-size: 13px; font-weight: 500; color: #2C3E50;">{topic}</div>
+        </div>
+        <div>
+            <div style="font-size: 11px; color: #8A9BB0; font-weight: 700;
+                 letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 3px;">Scheduled</div>
+            <div style="font-size: 13px; font-weight: 500; color: #2C3E50;">{start_time}</div>
+        </div>
+        <div>
+            <div style="font-size: 11px; color: #8A9BB0; font-weight: 700;
+                 letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 3px;">Actions</div>
+            <div style="font-size: 13px; font-weight: 500; color: #2C3E50;">
+                {len(ops)} &mdash; Calendar, Email, Doc
+            </div>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
             col1, col2 = st.columns([1, 1])
 
             with col1:
                 if st.button(
-                    f"✅ Approve All {len(ops)} Actions",
+                    f"Approve All {len(ops)} Actions",
                     key=f"approve_all_{booking_code}",
                     type="primary",
-                    use_container_width=True
+                    use_container_width=True,
                 ):
-                    with st.spinner("Executing all actions..."):
+                    with st.spinner("Executing all actions…"):
                         results = [approve(op["id"]) for op in ops]
                         success_count = sum(1 for r in results if r.get("success"))
                         if success_count == len(ops):
-                            st.success(f"✅ All {len(ops)} actions executed successfully!")
+                            st.success(f"All {len(ops)} actions executed successfully.")
                             st.balloons()
                         else:
-                            st.warning(f"⚠️ {success_count}/{len(ops)} actions succeeded")
+                            st.warning(f"{success_count}/{len(ops)} actions succeeded.")
                         st.rerun()
 
             with col2:
-                with st.popover("❌ Reject All", use_container_width=True):
+                with st.popover("Reject All", use_container_width=True):
                     reason = st.selectbox(
                         "Reason:",
                         REJECT_REASONS,
-                        key=f"reject_reason_{booking_code}"
+                        key=f"reject_reason_{booking_code}",
                     )
                     reason_text = st.text_area(
                         "Details:",
                         key=f"reject_text_{booking_code}",
-                        placeholder="Optional explanation..."
+                        placeholder="Optional explanation…",
                     )
                     if st.button("Confirm Rejection", key=f"reject_confirm_{booking_code}"):
                         for op in ops:
                             reject(op["id"], reason, reason_text)
-                        st.warning(f"🗑️ Booking {booking_code} rejected")
+                        st.warning(f"Booking {booking_code} rejected.")
                         st.rerun()
 
-            with st.expander("🔍 View Technical Details", expanded=False):
+            with st.expander("View Technical Details", expanded=False):
                 for i, op in enumerate(ops, 1):
                     st.caption(f"Action {i}: {op['op_type']}")
                     st.json(op.get("payload", {}), expanded=False)
 
-            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("<div style='margin-bottom: 8px;'></div>", unsafe_allow_html=True)
 
+    # ── Operation History ─────────────────────────────────────────────────────
     st.markdown("---")
-    st.subheader("Operation History")
+    st.markdown('<div class="section-label">Operation History</div>', unsafe_allow_html=True)
+
     all_ops = get_all_ops()
     if all_ops:
-        for op in all_ops:
-            status_emoji = {"pending": "🔶", "approved": "🔵", "executed": "🟢", "failed": "🔴", "rejected": "⚫"}.get(op["status"], "⚪")
-            st.markdown(f"{status_emoji} **{op['op_type']}** — {op['status']} — {op.get('created_at', '')[:19]}")
+        _badge_map = {
+            "pending":  "status-pending",
+            "approved": "status-approved",
+            "executed": "status-pass",
+            "failed":   "status-fail",
+            "rejected": "status-rejected",
+        }
+        st.markdown("""
+<div style="background: #FFFFFF; border-radius: 8px; border: 1px solid #E8EDF3;
+     overflow: hidden; box-shadow: 0 1px 3px rgba(11,31,58,0.04);">
+""", unsafe_allow_html=True)
+        for i, op in enumerate(all_ops):
+            badge_cls = _badge_map.get(op["status"], "status-pending")
+            row_bg = "#FFFFFF" if i % 2 == 0 else "#FAFBFC"
+            st.markdown(f"""
+<div style="display: flex; align-items: center; gap: 14px;
+     padding: 11px 16px; background: {row_bg};
+     border-bottom: 1px solid #F0F3F6; font-size: 13px;">
+    <span class="{badge_cls}">{op["status"]}</span>
+    <span style="color: #0B1F3A; font-weight: 500; flex: 1;">{op["op_type"]}</span>
+    <span style="color: #8A9BB0; font-size: 12px; font-family: 'SF Mono', monospace;">
+        {op.get("created_at", "")[:19]}
+    </span>
+</div>
+""", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
     else:
-        st.caption("No operations recorded yet.")
+        st.markdown("""
+<div style="padding: 24px; color: #8A9BB0; font-size: 13px; text-align: center;
+     background: #FFFFFF; border-radius: 8px; border: 1px solid #E8EDF3;">
+    No operations recorded yet.
+</div>
+""", unsafe_allow_html=True)
