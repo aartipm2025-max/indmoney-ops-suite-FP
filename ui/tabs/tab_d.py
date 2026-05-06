@@ -180,9 +180,28 @@ def render_tab_d():
                     with st.spinner("Executing all actions…"):
                         results = [approve(op["id"]) for op in ops]
                         success_count = sum(1 for r in results if r.get("success"))
+                        is_demo = any(r.get("demo") for r in results)
                         if success_count == len(ops):
-                            st.success(f"All {len(ops)} actions executed successfully.")
-                            st.balloons()
+                            if is_demo:
+                                st.info(
+                                    f"All {len(ops)} actions simulated (demo mode — "
+                                    "Google credentials not configured).",
+                                    icon="ℹ️",
+                                )
+                            else:
+                                st.success(f"All {len(ops)} actions executed successfully.")
+                                st.balloons()
+                            # Surface useful links
+                            for op, r in zip(ops, results):
+                                link = r.get("link")
+                                if link and not r.get("demo") and link != "#":
+                                    label_map = {
+                                        "calendar_hold": "Open Calendar Event",
+                                        "doc_append":    "Open Google Doc",
+                                    }
+                                    label = label_map.get(op["op_type"])
+                                    if label:
+                                        st.markdown(f"[{label}]({link})")
                         else:
                             st.warning(f"{success_count}/{len(ops)} actions succeeded.")
                         st.rerun()
