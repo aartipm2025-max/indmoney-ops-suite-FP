@@ -417,29 +417,6 @@ if not st.session_state.authenticated:
     """, unsafe_allow_html=True)
 
     # ── Top bar ───────────────────────────────────────────────────────────────
-    st.markdown("""
-<div style="display:flex; align-items:center; justify-content:space-between;
-     padding:14px 0 24px 0; border-bottom:1px solid rgba(255,255,255,0.07); margin-bottom:32px;">
-  <div style="display:flex; align-items:center; gap:12px;">
-    <div style="width:30px; height:30px; background:#5B7CFA; border-radius:6px;
-         display:flex; align-items:center; justify-content:center;
-         font-size:15px; font-weight:800; color:#0B1F3A;">I</div>
-    <div>
-      <div style="font-size:14px; font-weight:700; color:#FFFFFF; letter-spacing:0.01em;">INDmoney Ops Suite</div>
-      <div style="font-size:10px; color:rgba(255,255,255,0.4); letter-spacing:0.06em; text-transform:uppercase;">Investor Operations &amp; Intelligence</div>
-    </div>
-  </div>
-  <div style="display:flex; align-items:center; gap:16px;">
-    <div style="display:flex; align-items:center; gap:6px;">
-      <div style="width:7px; height:7px; border-radius:50%; background:#10B981; box-shadow:0 0 6px rgba(16,185,129,0.6);"></div>
-      <span style="font-size:11px; color:rgba(255,255,255,0.5);">All systems operational</span>
-    </div>
-    <div style="font-size:11px; color:rgba(255,255,255,0.3); padding:3px 10px;
-         border:1px solid rgba(255,255,255,0.1); border-radius:4px;">v2.0 · 2026</div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
-
     # ── Two-column layout: left hero + right login ────────────────────────────
     col_hero, col_form = st.columns([6, 4], gap="large")
 
