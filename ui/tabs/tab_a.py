@@ -42,16 +42,20 @@ def _display_answer(result: dict) -> None:
     st.markdown("### Answer")
 
     all_sources = set()
-    for i, bullet in enumerate(result.get("bullets", []), 1):
+    display_num = 0
+    for bullet in result.get("bullets", []):
         text = bullet.get("text", "")
         sources = re.findall(r'\[source:([^\]]+)\]', text)
-        all_sources.update(sources)
         clean_text = re.sub(r'\s*\[source:[^\]]+\]\s*', ' ', text)
         clean_text = re.sub(r'\[doc_id=[^\]]+\]', '', clean_text).strip()
+        if not clean_text:
+            continue
+        all_sources.update(sources)
+        display_num += 1
         st.markdown(f"""
 <div class="answer-bullet">
     <div style="font-size: 14px; line-height: 1.65; color: #2C3E50;">
-        <span style="font-weight: 700; color: #0B1F3A;">{i}.</span>&nbsp; {clean_text}
+        <span style="font-weight: 700; color: #0B1F3A;">{display_num}.</span>&nbsp; {clean_text}
     </div>
 </div>
 """, unsafe_allow_html=True)
