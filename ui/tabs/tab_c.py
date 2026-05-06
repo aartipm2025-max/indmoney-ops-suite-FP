@@ -118,24 +118,6 @@ _CSS = """
 .vc-step-sub { font-size:10px; color:#9CA3AF; margin-top:1px; }
 
 
-/* Trending chips section */
-.vc-trending {
-    background:#F8FAFC; border:1px solid #E8EDF3;
-    border-radius:8px; padding:12px 14px; margin-bottom:16px;
-}
-.vc-trending-hdr {
-    font-size:10px; font-weight:700; letter-spacing:0.09em;
-    text-transform:uppercase; color:#9CA3AF; margin-bottom:10px;
-}
-.vc-trend-sev {
-    font-size:9px; font-weight:700; letter-spacing:0.05em;
-    text-transform:uppercase; padding:1px 6px; border-radius:3px;
-    display:inline-block; margin-bottom:4px;
-}
-.vc-sev-critical { background:#FEE2E2; color:#991B1B; }
-.vc-sev-high     { background:#FEF3C7; color:#92400E; }
-.vc-sev-medium   { background:#DBEAFE; color:#1E40AF; }
-
 /* Booking card */
 .vc-booking {
     background:#0B1F3A; border-radius:12px;
@@ -321,27 +303,6 @@ def render_tab_c():
             '<div class="section-label" style="margin-bottom:14px;">Conversation</div>',
             unsafe_allow_html=True,
         )
-
-        # Trending This Week — pulse-aware booking intents
-        pulse_data = st.session_state.get("pulse")
-        if pulse_data and current_state.upper() not in ("BOOKED", "FAILED"):
-            pulse_themes = pulse_data.get("themes", [])[:3]
-            if pulse_themes:
-                sev_cls = {"CRITICAL": "vc-sev-critical", "HIGH": "vc-sev-high"}
-                st.markdown('<div class="vc-trending"><div class="vc-trending-hdr">Trending This Week — tap to pre-select a booking topic</div></div>',
-                            unsafe_allow_html=True)
-                chip_cols = st.columns(len(pulse_themes))
-                for i, (col, t) in enumerate(zip(chip_cols, pulse_themes)):
-                    with col:
-                        name  = t["name"]
-                        short = name.split("&")[0].strip() if "&" in name else name
-                        sev   = t.get("severity", "MEDIUM")
-                        cls   = sev_cls.get(sev, "vc-sev-medium")
-                        st.markdown(f'<div class="{cls} vc-trend-sev">{sev}</div>',
-                                    unsafe_allow_html=True)
-                        if st.button(short, key=f"trend_chip_{i}", use_container_width=True):
-                            st.session_state["voice_text_input"] = f"I need help with {name}"
-                            st.rerun()
 
         # Message history
         for entry in history:
