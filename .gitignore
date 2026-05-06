@@ -1,7 +1,6 @@
 .env
 .secrets/*
 !.secrets/.gitkeep
-data/chroma_db/
 data/state.db
 logs/*.log
 logs/*.jsonl
