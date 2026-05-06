@@ -15,19 +15,6 @@ def render_tab_d():
 
     from pillars.pillar_c_hitl.approval import get_all_ops, approve, reject, REJECT_REASONS
 
-    # ── Session-level ops history (survives tab-switches; immune to DB wipes) ──
-    if "ops_history" not in st.session_state:
-        st.session_state["ops_history"] = []
-
-    # Seed session history from DB once per session so pre-existing ops appear
-    if "ops_history_seeded" not in st.session_state:
-        try:
-            for op in get_all_ops():
-                _track_op(op["op_type"], op["status"], op.get("created_at", ""))
-        except Exception:
-            pass
-        st.session_state["ops_history_seeded"] = True
-
     # ── Auto-submit booking ────────────────────────────────────────────────────
     if "submitted_bookings" not in st.session_state:
         st.session_state["submitted_bookings"] = set()
@@ -307,59 +294,6 @@ def render_tab_d():
 
             st.markdown("<div style='margin-bottom: 8px;'></div>", unsafe_allow_html=True)
 
-    # ── Operation History ─────────────────────────────────────────────────────
-    st.markdown("---")
-    st.markdown('<div class="section-label">Operation History</div>', unsafe_allow_html=True)
-
-    # Primary source: DB (most accurate).
-    # Fallback: session_state history (survives DB resets within the same session).
-    db_ops = get_all_ops()
-    display_ops = db_ops if db_ops else [
-        {"op_type": h["op_type"], "status": h["status"],
-         "created_at": h["created_at"], "demo": h.get("demo", False)}
-        for h in reversed(st.session_state["ops_history"])
-    ]
-
-    if display_ops:
-        _badge_map = {
-            "pending":  "status-pending",
-            "approved": "status-approved",
-            "executed": "status-pass",
-            "failed":   "status-fail",
-            "rejected": "status-rejected",
-        }
-        src_note = "" if db_ops else (
-            '<div style="font-size:11px;color:#9CA3AF;padding:8px 16px 0;'
-            'font-style:italic;">Showing session history — database was reset by a recent deployment.</div>'
-        )
-        st.markdown(f"""
-<div style="background:#FFFFFF; border-radius:8px; border:1px solid #E8EDF3;
-     overflow:hidden; box-shadow:0 1px 3px rgba(11,31,58,0.04);">
-{src_note}
-""", unsafe_allow_html=True)
-        for i, op in enumerate(display_ops):
-            badge_cls = _badge_map.get(op["status"], "status-pending")
-            row_bg    = "#FFFFFF" if i % 2 == 0 else "#FAFBFC"
-            demo_tag  = ' <span style="font-size:10px;color:#9CA3AF;">(demo)</span>' if op.get("demo") else ""
-            st.markdown(f"""
-<div style="display:flex; align-items:center; gap:14px;
-     padding:11px 16px; background:{row_bg};
-     border-bottom:1px solid #F0F3F6; font-size:13px;">
-    <span class="{badge_cls}">{op["status"]}</span>
-    <span style="color:#0B1F3A; font-weight:500; flex:1;">{op["op_type"]}{demo_tag}</span>
-    <span style="color:#8A9BB0; font-size:12px; font-family:'SF Mono',monospace;">
-        {op.get("created_at","")[:19]}
-    </span>
-</div>
-""", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-    else:
-        st.markdown("""
-<div style="padding:24px; color:#8A9BB0; font-size:13px; text-align:center;
-     background:#FFFFFF; border-radius:8px; border:1px solid #E8EDF3;">
-    No operations recorded yet.
-</div>
-""", unsafe_allow_html=True)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
