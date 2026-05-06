@@ -722,33 +722,6 @@ def render_home():
 </div>""", unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown("<div style='height:22px'></div>", unsafe_allow_html=True)
-
-    # ── 3 Recent Activity Items ───────────────────────────────────────────────
-    st.markdown('<div class="section-label">Recent Activity</div>', unsafe_allow_html=True)
-
-    eval_cls = "act-ok" if eval_label == "PASS" else "act-warn"
-    activity = [
-        (_fmt_ts("evals/rag_eval_results.json"), "act-mod-eval", "Evaluation",
-         f"Eval suite ran — {eval_sub}", eval_label, eval_cls),
-        (_fmt_ts("data/reviews/reviews.csv"),    "act-mod-pulse", "Weekly Pulse",
-         "300 reviews analysed — negative sentiment improving", "Done", "act-ok"),
-        (_fmt_ts("data/chroma_db"),              "act-mod-kb",   "Knowledge Base",
-         "41 chunks indexed across 5 SBI fund factsheets", "Indexed", "act-ok"),
-    ]
-
-    rows_html = ""
-    for ts, mod_cls, mod_label, event, status, status_cls in activity:
-        rows_html += f"""
-<div class="act-row">
-  <span class="act-mod {mod_cls}">{mod_label}</span>
-  <span class="act-event">{event}</span>
-  <span class="act-time">{ts}</span>
-  <span class="act-badge {status_cls}">{status}</span>
-</div>"""
-
-    st.markdown(f'<div class="hm-card" style="padding:16px 20px;">{rows_html}</div>',
-                unsafe_allow_html=True)
 
 
 # ── Persistent brand header — always shown on every page ─────────────────────
