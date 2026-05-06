@@ -303,10 +303,11 @@ p, li { color: #2C3E50; font-size: 15px; line-height: 1.65; }
     padding: 10px 20px; transition: all 0.2s ease;
 }
 .stButton > button[kind="primary"] {
-    background-color: #0B1F3A; color: #FFFFFF; border: 1px solid #0B1F3A;
+    background-color: #0B1F3A !important; color: #FFFFFF !important; border: 1px solid #0B1F3A !important;
 }
+.stButton > button[kind="primary"] * { color: #FFFFFF !important; }
 .stButton > button[kind="primary"]:hover {
-    background-color: #162D4F; border-color: #5B7CFA;
+    background-color: #162D4F !important; border-color: #5B7CFA !important;
     box-shadow: 0 4px 12px rgba(11,31,58,0.2);
 }
 .stButton > button[kind="primary"]:active { transform: scale(0.98); }
