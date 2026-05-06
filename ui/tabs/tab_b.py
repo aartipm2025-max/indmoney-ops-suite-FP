@@ -313,7 +313,7 @@ def _render_metrics(data: dict) -> None:
          f"Negative Sentiment · {abs(neg_delta):.1f}pp WoW"),
         (c3, "Trading & Orders",
          "Most Affected User Journey"),
-        (c4, fastest["name"].split("&")[0].strip()[:18] + "…" if "&" in fastest["name"] else fastest["name"][:20],
+        (c4, fastest["name"].split("&")[0].strip() if "&" in fastest["name"] else fastest["name"],
          f"Fastest Growing Issue · +{fastest['delta']:.0f}% WoW"),
     ]
     for col, val, label in cards:
@@ -430,8 +430,8 @@ def render_tab_b():
 
     _render_header(data)
 
-    _, ctrl_r = st.columns([5, 1])
-    with ctrl_r:
+    ctrl_l, _ = st.columns([1, 5])
+    with ctrl_l:
         if st.button("Generate Pulse", key="pulse_generate", use_container_width=True, type="primary"):
             st.cache_data.clear()
             st.rerun()
