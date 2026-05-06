@@ -484,21 +484,6 @@ if not st.session_state.authenticated:
     </div>
   </div>
 
-  <div style="margin-top:32px; padding-top:24px; border-top:1px solid rgba(255,255,255,0.07);
-       display:flex; gap:24px;">
-    <div>
-      <div style="font-size:22px; font-weight:700; color:#D4A437;">300+</div>
-      <div style="font-size:11px; color:rgba(255,255,255,0.4);">Reviews Analysed</div>
-    </div>
-    <div>
-      <div style="font-size:22px; font-weight:700; color:#D4A437;">5</div>
-      <div style="font-size:11px; color:rgba(255,255,255,0.4);">AI Modules</div>
-    </div>
-    <div>
-      <div style="font-size:22px; font-weight:700; color:#D4A437;">78%</div>
-      <div style="font-size:11px; color:rgba(255,255,255,0.4);">RAG Accuracy</div>
-    </div>
-  </div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -531,34 +516,6 @@ if not st.session_state.authenticated:
                         st.error("Please enter both username and email.")
 
         st.markdown("""
-<div style="margin-top:16px; padding:14px 16px;
-     background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
-     border-radius:8px;">
-  <div style="font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
-       color:rgba(255,255,255,0.35); margin-bottom:10px;">System Status</div>
-  <div style="display:flex; flex-direction:column; gap:7px;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-size:12px; color:rgba(255,255,255,0.55);">Knowledge Base</span>
-      <span style="font-size:10px; font-weight:600; color:#10B981; background:rgba(16,185,129,0.1);
-            padding:2px 8px; border-radius:4px; border:1px solid rgba(16,185,129,0.2);">Online</span>
-    </div>
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-size:12px; color:rgba(255,255,255,0.55);">AI Inference (Groq)</span>
-      <span style="font-size:10px; font-weight:600; color:#10B981; background:rgba(16,185,129,0.1);
-            padding:2px 8px; border-radius:4px; border:1px solid rgba(16,185,129,0.2);">Online</span>
-    </div>
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-size:12px; color:rgba(255,255,255,0.55);">Review Pipeline</span>
-      <span style="font-size:10px; font-weight:600; color:#10B981; background:rgba(16,185,129,0.1);
-            padding:2px 8px; border-radius:4px; border:1px solid rgba(16,185,129,0.2);">Online</span>
-    </div>
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-size:12px; color:rgba(255,255,255,0.55);">HITL Queue</span>
-      <span style="font-size:10px; font-weight:600; color:#10B981; background:rgba(16,185,129,0.1);
-            padding:2px 8px; border-radius:4px; border:1px solid rgba(16,185,129,0.2);">Online</span>
-    </div>
-  </div>
-</div>
 <div style="margin-top:12px; text-align:center; font-size:11px; color:rgba(255,255,255,0.22);">
   INDmoney Capstone 2026 &nbsp;·&nbsp; Authorized Access Only
 </div>
