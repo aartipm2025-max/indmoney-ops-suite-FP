@@ -284,22 +284,17 @@ def render_tab_c():
 </div>
 """, unsafe_allow_html=True)
 
-        st.markdown("### Action Required: Enter Your Email")
-        st.caption("Your email will be shared with the advisor for meeting confirmation. No PII was collected during the call.")
-
-        user_email = st.text_input(
-            "Email address:",
-            key="booking_email",
-            placeholder="your.email@example.com",
-        )
+        user_email = st.session_state.get("email", "")
+        st.markdown(f"""
+<div style="font-size:13px; color:#6B7280; margin:12px 0 8px;">
+  Confirmation will be sent to <strong style="color:#0B1F3A;">{user_email}</strong>
+</div>
+""", unsafe_allow_html=True)
         if st.button("Complete Booking", type="primary", use_container_width=True):
-            if user_email and "@" in user_email:
-                st.session_state["booking_context"]["user_email"] = user_email
-                st.success(f"Email saved: {user_email}")
-                st.info("Go to the **Action Approval** tab to submit this booking to the advisor.")
-                st.balloons()
-            else:
-                st.error("Please enter a valid email address.")
+            st.session_state["booking_context"]["user_email"] = user_email
+            st.success(f"Booking confirmed for {user_email}")
+            st.info("Go to the **Action Approval** tab to submit this booking to the advisor.")
+            st.balloons()
 
     st.markdown("<div style='margin-top: 16px;'></div>", unsafe_allow_html=True)
     if st.button("Start New Conversation", use_container_width=True):
