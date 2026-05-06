@@ -592,7 +592,8 @@ with st.sidebar:
 
 # ── Home Dashboard ────────────────────────────────────────────────────────────
 def render_home():
-    import json
+    import json, os
+    from datetime import datetime as _dt
 
     # ── Data ─────────────────────────────────────────────────────────────────
     try:
@@ -605,22 +606,27 @@ def render_home():
     safety_path = Path("evals/safety_eval_results.json")
     if rag_path.exists() and safety_path.exists():
         try:
-            rag_data   = json.loads(rag_path.read_text())
+            rag_data    = json.loads(rag_path.read_text())
             safety_data = json.loads(safety_path.read_text())
-            rag_pct    = (sum(1 for r in rag_data if r["status"] == "pass") / len(rag_data) * 100) if rag_data else 0
-            safety_ok  = all(r["status"] == "pass" for r in safety_data)
-            eval_label = "PASS" if rag_pct >= 70 and safety_ok else "REVIEW"
-            eval_color = "#10B981" if eval_label == "PASS" else "#F59E0B"
-            eval_sub   = f"RAG {rag_pct:.0f}% · Safety {'✓' if safety_ok else '✗'}"
+            rag_pct     = (sum(1 for r in rag_data if r["status"] == "pass") / len(rag_data) * 100) if rag_data else 0
+            safety_ok   = all(r["status"] == "pass" for r in safety_data)
+            eval_label  = "PASS" if rag_pct >= 70 and safety_ok else "REVIEW"
+            eval_color  = "#10B981" if eval_label == "PASS" else "#F59E0B"
+            eval_sub    = f"RAG {rag_pct:.0f}% · Safety {'✓' if safety_ok else '✗'}"
         except Exception:
             eval_label, eval_color, eval_sub = "ERROR", "#EF4444", "Parse failed"
     else:
         eval_label, eval_color, eval_sub = "NOT RUN", "#9CA3AF", "Run evals first"
 
-    q           = st.session_state.get("queries_this_session", 0)
-    now_str     = datetime.now().strftime("%A, %d %b %Y · %H:%M")
-    appr_color  = "#F59E0B" if pending_count > 0 else "#10B981"
-    appr_label  = f"{pending_count} pending" if pending_count > 0 else "All clear"
+    appr_color = "#F59E0B" if pending_count > 0 else "#10B981"
+    appr_label = f"{pending_count} pending" if pending_count > 0 else "All clear"
+    now_str    = datetime.now().strftime("%A, %d %b %Y · %H:%M")
+
+    def _fmt_ts(path):
+        try:
+            return _dt.fromtimestamp(os.path.getmtime(path)).strftime("%d %b · %H:%M")
+        except Exception:
+            return "—"
 
     st.markdown(f"""
 <style>
@@ -629,246 +635,120 @@ def render_home():
     padding:18px 20px; transition:box-shadow 0.18s, transform 0.18s;
 }}
 .hm-card:hover {{ box-shadow:0 6px 20px rgba(11,31,58,0.10); transform:translateY(-1px); }}
-.hm-label {{
-    font-size:11px; font-weight:700; letter-spacing:0.08em;
-    text-transform:uppercase; color:#9CA3AF; margin-bottom:8px;
-}}
-.hm-val {{
-    font-size:28px; font-weight:700; color:#0B1F3A;
-    line-height:1; letter-spacing:-0.02em; margin-bottom:4px;
-    font-variant-numeric:tabular-nums;
-}}
+.hm-label {{ font-size:11px; font-weight:700; letter-spacing:0.08em;
+    text-transform:uppercase; color:#9CA3AF; margin-bottom:8px; }}
+.hm-val {{ font-size:22px; font-weight:700; line-height:1;
+    letter-spacing:-0.02em; margin-bottom:4px; font-variant-numeric:tabular-nums; }}
 .hm-sub {{ font-size:12px; color:#6B7280; }}
-.hm-dot {{
-    display:inline-block; width:7px; height:7px; border-radius:50%;
-    margin-right:5px; vertical-align:middle;
-}}
-.act-table {{
-    width:100%; border-collapse:collapse;
-}}
-.act-table thead tr {{
-    border-bottom:2px solid #E8EDF3;
-}}
-.act-table thead th {{
-    font-size:10px; font-weight:700; letter-spacing:0.08em;
-    text-transform:uppercase; color:#9CA3AF;
-    padding:0 12px 10px 0; text-align:left;
-}}
-.act-table tbody tr {{
-    border-bottom:1px solid #F3F4F6;
-    transition:background 0.15s;
-}}
-.act-table tbody tr:last-child {{ border-bottom:none; }}
-.act-table tbody tr:hover {{ background:#FAFBFC; }}
-.act-table td {{
-    padding:11px 12px 11px 0; vertical-align:middle;
-}}
-.act-time {{
-    font-size:11px; color:#9CA3AF; white-space:nowrap;
-    font-variant-numeric:tabular-nums; min-width:120px;
-}}
-.act-mod {{
-    font-size:11px; font-weight:600; padding:3px 9px; border-radius:4px;
-    white-space:nowrap; display:inline-block;
-}}
+.alert-row {{ display:flex; align-items:flex-start; gap:12px;
+    padding:11px 0; border-bottom:1px solid #F3F4F6; }}
+.alert-row:last-child {{ border-bottom:none; padding-bottom:0; }}
+.alert-icon {{ width:28px; height:28px; border-radius:6px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:12px; }}
+.alert-title {{ font-size:13px; font-weight:600; color:#1B2430; margin-bottom:1px; }}
+.alert-meta  {{ font-size:11px; color:#9CA3AF; }}
+.act-row {{ display:flex; align-items:center; gap:14px;
+    padding:11px 0; border-bottom:1px solid #F3F4F6; }}
+.act-row:last-child {{ border-bottom:none; padding-bottom:0; }}
+.act-mod {{ font-size:11px; font-weight:600; padding:2px 8px; border-radius:4px;
+    white-space:nowrap; flex-shrink:0; }}
 .act-mod-kb    {{ color:#1D4ED8; background:#DBEAFE; }}
 .act-mod-pulse {{ color:#5B21B6; background:#EDE9FE; }}
-.act-mod-hitl  {{ color:#92400E; background:#FEF3C7; }}
 .act-mod-eval  {{ color:#065F46; background:#D1FAE5; }}
-.act-mod-sys   {{ color:#374151; background:#F3F4F6; }}
-.act-mod-voice {{ color:#0F766E; background:#CCFBF1; }}
-.act-event {{
-    font-size:13px; color:#1B2430; font-weight:500; line-height:1.5;
-}}
-.act-detail {{
-    font-size:11px; color:#9CA3AF; margin-top:2px;
-}}
-.act-status {{
-    font-size:11px; font-weight:600; padding:3px 9px; border-radius:4px;
-    white-space:nowrap; display:inline-block;
-}}
+.act-event {{ font-size:13px; color:#1B2430; font-weight:500; flex:1; }}
+.act-time  {{ font-size:11px; color:#9CA3AF; white-space:nowrap;
+    font-variant-numeric:tabular-nums; }}
+.act-badge {{ font-size:11px; font-weight:600; padding:2px 8px; border-radius:4px; white-space:nowrap; }}
 .act-ok   {{ color:#065F46; background:#D1FAE5; }}
 .act-warn {{ color:#92400E; background:#FEF3C7; }}
-.act-info {{ color:#1D4ED8; background:#DBEAFE; }}
-.act-err  {{ color:#991B1B; background:#FEE2E2; }}
-.alert-row {{
-    display:flex; align-items:flex-start; gap:12px;
-    padding:12px 0; border-bottom:1px solid #F3F4F6;
-}}
-.alert-row:last-child {{ border-bottom:none; padding-bottom:0; }}
-.alert-icon {{
-    width:30px; height:30px; border-radius:7px; flex-shrink:0;
-    display:flex; align-items:center; justify-content:center; font-size:13px;
-}}
-.alert-title {{ font-size:13px; font-weight:600; color:#1B2430; margin-bottom:2px; }}
-.alert-meta  {{ font-size:11px; color:#9CA3AF; }}
 </style>
-
-<!-- date strip -->
-<div style="font-size:12px; color:#9CA3AF; margin-bottom:20px; font-weight:500;">
-  {now_str}
-</div>
+<div style="font-size:12px; color:#9CA3AF; margin-bottom:20px; font-weight:500;">{now_str}</div>
 """, unsafe_allow_html=True)
 
-    # ── Executive Metrics Strip ───────────────────────────────────────────────
-    st.markdown('<div class="section-label">Operational Overview</div>', unsafe_allow_html=True)
-    m1, m2, m3, m4, m5 = st.columns(5)
-
-    metrics = [
-        (m1, "System Health",  "Nominal",      "#10B981", "All 5 modules online"),
-        (m2, "HITL Approvals", str(pending_count), appr_color, appr_label),
-        (m3, "AI Accuracy",    eval_label,     eval_color, eval_sub),
-        (m4, "Session Queries", str(q),        "#5B7CFA",  "Knowledge Base"),
-        (m5, "Active Alerts",  "0",            "#10B981",  "No critical issues"),
-    ]
-    for col, label, val, color, sub in metrics:
+    # ── 3 Metric Cards ────────────────────────────────────────────────────────
+    st.markdown('<div class="section-label">System Status</div>', unsafe_allow_html=True)
+    m1, m2, m3 = st.columns(3)
+    for col, label, val, color, sub in [
+        (m1, "System Health",  "Nominal",   "#10B981", "All modules online"),
+        (m2, "HITL Approvals", appr_label,  appr_color, f"{pending_count} in queue"),
+        (m3, "AI Accuracy",    eval_label,  eval_color, eval_sub),
+    ]:
         with col:
             st.markdown(f"""
 <div class="hm-card" style="border-top:3px solid {color};">
   <div class="hm-label">{label}</div>
-  <div class="hm-val" style="font-size:22px; color:{color};">{val}</div>
+  <div class="hm-val" style="color:{color};">{val}</div>
   <div class="hm-sub">{sub}</div>
-</div>
-""", unsafe_allow_html=True)
+</div>""", unsafe_allow_html=True)
 
-    st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:22px'></div>", unsafe_allow_html=True)
 
-    # ── Intelligence Summary + Priority Alerts ────────────────────────────────
+    # ── Summary + Alerts ──────────────────────────────────────────────────────
     left, right = st.columns([3, 2], gap="large")
 
     with left:
-        st.markdown('<div class="section-label">Operational Intelligence Summary</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-label">Operational Summary</div>', unsafe_allow_html=True)
+        hitl_note = f"{pending_count} approval(s) pending in HITL queue." if pending_count > 0 else "HITL queue is clear."
         st.markdown(f"""
-<div class="hm-card" style="border-left:3px solid #0B1F3A; padding:22px 24px;">
-  <div style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
-       color:#5B7CFA; margin-bottom:10px;">AI-Generated · {datetime.now().strftime("%d %b %Y")}</div>
-  <div style="font-size:15px; font-weight:700; color:#0B1F3A; margin-bottom:10px;">
-    Platform operating within normal parameters.
+<div class="hm-card" style="border-left:3px solid #0B1F3A; padding:20px 22px;">
+  <div style="font-size:13px; color:#4B5563; line-height:1.8;">
+    Knowledge Base online — 41 chunks across 5 SBI fund factsheets.<br>
+    Weekly Pulse: <strong>300 reviews analysed</strong>, negative sentiment improving (89.5% → 62.3%).<br>
+    {hitl_note} Evaluation suite: <strong style="color:{eval_color};">{eval_label}</strong> ({eval_sub}).
   </div>
-  <div style="font-size:13px; color:#4B5563; line-height:1.75; margin-bottom:16px;">
-    Knowledge Base is live with 41 indexed chunks across 5 SBI Mutual Fund factsheets.
-    Weekly Pulse has analysed <strong>300 user reviews</strong> — negative sentiment improving
-    week-over-week (89.5% → 62.3%). HITL queue has
-    <strong>{pending_count} pending approval{'s' if pending_count != 1 else ''}</strong>.
-    Evaluation suite status: <strong style="color:{eval_color};">{eval_label}</strong>.
-  </div>
-  <div style="display:flex; gap:8px; flex-wrap:wrap;">
-    <span style="font-size:11px; font-weight:600; color:#065F46; background:#D1FAE5;
-          padding:3px 10px; border-radius:4px;">KB Online</span>
-    <span style="font-size:11px; font-weight:600; color:#1D4ED8; background:#DBEAFE;
-          padding:3px 10px; border-radius:4px;">Pulse Active</span>
-    <span style="font-size:11px; font-weight:600; color:#5B21B6; background:#EDE9FE;
-          padding:3px 10px; border-radius:4px;">Voice Ready</span>
-    <span style="font-size:11px; font-weight:600; color:{("#065F46" if eval_label=="PASS" else "#92400E")};
-          background:{("#D1FAE5" if eval_label=="PASS" else "#FEF3C7")};
-          padding:3px 10px; border-radius:4px;">Evals {eval_label}</span>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+</div>""", unsafe_allow_html=True)
 
     with right:
         st.markdown('<div class="section-label">Priority Alerts</div>', unsafe_allow_html=True)
         alerts = []
         if pending_count > 0:
-            alerts.append(("⚠", "#FEF3C7", "#92400E", f"{pending_count} HITL operation(s) awaiting approval", "Action Approval · Immediate"))
+            alerts.append(("⚠", "#FEF3C7", "#92400E",
+                           f"{pending_count} HITL operation(s) awaiting approval", "Action Approval · Immediate"))
         if eval_label not in ("PASS", "NOT RUN"):
-            alerts.append(("✗", "#FEE2E2", "#991B1B", "Evaluation suite needs attention", f"Evaluation · {eval_sub}"))
+            alerts.append(("✗", "#FEE2E2", "#991B1B",
+                           "Evaluation suite needs attention", f"Evals · {eval_sub}"))
         if not alerts:
             alerts.append(("✓", "#D1FAE5", "#065F46", "No active alerts", "All systems nominal"))
         alerts += [
-            ("◎", "#EEF2FF", "#3730A3", "Weekly Pulse: UI regression still top theme", "Weekly Pulse · High severity"),
-            ("◎", "#EEF2FF", "#3730A3", "Order failure rate elevated this week", "Weekly Pulse · Monitor"),
+            ("◎", "#EEF2FF", "#3730A3", "UI regression remains top Pulse theme", "Weekly Pulse · High"),
+            ("◎", "#EEF2FF", "#3730A3", "Order failure rate elevated this week",  "Weekly Pulse · Monitor"),
         ]
-        st.markdown('<div class="hm-card" style="padding:18px 20px;">', unsafe_allow_html=True)
-        for icon, bg, color, title, meta in alerts[:4]:
+        st.markdown('<div class="hm-card" style="padding:16px 18px;">', unsafe_allow_html=True)
+        for icon, bg, color, title, meta in alerts[:3]:
             st.markdown(f"""
 <div class="alert-row">
   <div class="alert-icon" style="background:{bg}; color:{color};">{icon}</div>
-  <div>
-    <div class="alert-title">{title}</div>
-    <div class="alert-meta">{meta}</div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+  <div><div class="alert-title">{title}</div><div class="alert-meta">{meta}</div></div>
+</div>""", unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:22px'></div>", unsafe_allow_html=True)
 
-    # ── Recent Operational Activity ───────────────────────────────────────────
-    st.markdown('<div class="section-label">Recent Operational Activity</div>', unsafe_allow_html=True)
+    # ── 3 Recent Activity Items ───────────────────────────────────────────────
+    st.markdown('<div class="section-label">Recent Activity</div>', unsafe_allow_html=True)
 
-    import os
-    from datetime import datetime as _dt
-
-    def _fmt_ts(path):
-        try:
-            return _dt.fromtimestamp(os.path.getmtime(path)).strftime("%d %b %Y · %H:%M")
-        except Exception:
-            return "—"
-
-    kb_ts    = _fmt_ts("data/chroma_db")
-    pulse_ts = _fmt_ts("data/reviews/reviews.csv")
-    eval_ts  = _fmt_ts("evals/rag_eval_results.json")
-    sfty_ts  = _fmt_ts("evals/safety_eval_results.json")
-
-    eval_status_cls = "act-ok" if eval_label == "PASS" else ("act-warn" if eval_label == "REVIEW" else "act-info")
-    hitl_status_cls = "act-warn" if pending_count > 0 else "act-ok"
-    hitl_status_lbl = f"{pending_count} Pending" if pending_count > 0 else "Clear"
-
-    q_label = str(q) + " Queries" if q > 0 else "Idle"
-    q_cls   = "act-info" if q > 0 else "act-ok"
-
-    rows = [
-        (kb_ts,    "act-mod-kb",    "Knowledge Base",
-         "KB ingestion complete — 41 chunks indexed across 5 SBI fund factsheets",
-         "BM25 + Vector hybrid index live", "Indexed", "act-ok"),
-        (pulse_ts, "act-mod-pulse", "Weekly Pulse",
-         "Sentiment analysis pipeline executed on 300 Play Store reviews",
-         "Negative sentiment: 62.3% (↓ improving week-over-week)", "Analysed", "act-ok"),
-        (eval_ts,  "act-mod-eval",  "Evaluation",
-         f"RAG evaluation suite completed — {eval_sub}",
-         "Groundedness, relevance, and safety checks validated", eval_label, eval_status_cls),
-        (sfty_ts,  "act-mod-eval",  "Evaluation",
-         "Safety evaluation suite completed — adversarial prompt battery",
-         "PII, investment advice, and jailbreak probes tested", "Safety ✓", "act-ok"),
-        (now_str,  "act-mod-hitl",  "Action Approval",
-         f"HITL queue status checked — {pending_count} operation(s) awaiting review",
-         "Calendar · Email · Docs operations gated", hitl_status_lbl, hitl_status_cls),
-        (now_str,  "act-mod-kb",    "Knowledge Base",
-         f"Session activity — {q} query/queries processed this session",
-         "Hybrid retrieval · source-cited answers delivered", q_label, q_cls),
+    eval_cls = "act-ok" if eval_label == "PASS" else "act-warn"
+    activity = [
+        (_fmt_ts("evals/rag_eval_results.json"), "act-mod-eval", "Evaluation",
+         f"Eval suite ran — {eval_sub}", eval_label, eval_cls),
+        (_fmt_ts("data/reviews/reviews.csv"),    "act-mod-pulse", "Weekly Pulse",
+         "300 reviews analysed — negative sentiment improving", "Done", "act-ok"),
+        (_fmt_ts("data/chroma_db"),              "act-mod-kb",   "Knowledge Base",
+         "41 chunks indexed across 5 SBI fund factsheets", "Indexed", "act-ok"),
     ]
 
     rows_html = ""
-    for ts, mod_cls, mod_label, event, detail, status, status_cls in rows:
+    for ts, mod_cls, mod_label, event, status, status_cls in activity:
         rows_html += f"""
-<tr>
-  <td class="act-time">{ts}</td>
-  <td><span class="act-mod {mod_cls}">{mod_label}</span></td>
-  <td>
-    <div class="act-event">{event}</div>
-    <div class="act-detail">{detail}</div>
-  </td>
-  <td><span class="act-status {status_cls}">{status}</span></td>
-</tr>"""
+<div class="act-row">
+  <span class="act-mod {mod_cls}">{mod_label}</span>
+  <span class="act-event">{event}</span>
+  <span class="act-time">{ts}</span>
+  <span class="act-badge {status_cls}">{status}</span>
+</div>"""
 
-    st.markdown(f"""
-<div class="hm-card" style="padding:20px 24px;">
-  <table class="act-table">
-    <thead>
-      <tr>
-        <th>Timestamp</th>
-        <th>Module</th>
-        <th>Event</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {rows_html}
-    </tbody>
-  </table>
-</div>
-""", unsafe_allow_html=True)
+    st.markdown(f'<div class="hm-card" style="padding:16px 20px;">{rows_html}</div>',
+                unsafe_allow_html=True)
 
 
 # ── Persistent brand header — always shown on every page ─────────────────────
