@@ -360,108 +360,209 @@ if not st.session_state.authenticated:
     <style>
     section[data-testid="stSidebar"] { display: none !important; }
     .stApp {
-        background: linear-gradient(180deg, #0B1F3A 0%, #1a2f4a 100%) !important;
+        background: #071628 !important;
+        background-image:
+            radial-gradient(ellipse 80% 50% at 50% -10%, rgba(212,164,55,0.07) 0%, transparent 70%),
+            radial-gradient(ellipse 60% 40% at 80% 80%, rgba(11,31,58,0.6) 0%, transparent 60%) !important;
     }
     .main .block-container {
-        max-width: 320px !important;
-        padding-top: 64px !important;
-        padding-left: 12px !important;
-        padding-right: 12px !important;
+        max-width: 1100px !important;
+        padding-top: 0 !important;
+        padding-left: 24px !important;
+        padding-right: 24px !important;
     }
-    /* Compact form inputs — white text on dark background */
+    /* Inputs */
     .stTextInput > div > div > input {
-        height: 44px !important;
-        font-size: 14px !important;
+        height: 42px !important; font-size: 13px !important;
         color: #FFFFFF !important;
-        background: rgba(255,255,255,0.08) !important;
-        border: 1.5px solid rgba(255,255,255,0.2) !important;
-        caret-color: #FFFFFF !important;
+        background: rgba(255,255,255,0.06) !important;
+        border: 1px solid rgba(255,255,255,0.18) !important;
+        border-radius: 6px !important;
+        caret-color: #D4A437 !important;
+        transition: border-color 0.15s, background 0.15s !important;
     }
-    .stTextInput > div > div > input::placeholder {
-        color: rgba(255,255,255,0.4) !important;
-    }
+    .stTextInput > div > div > input::placeholder { color: rgba(255,255,255,0.35) !important; }
     .stTextInput > div > div > input:focus {
         border-color: #D4A437 !important;
-        box-shadow: 0 0 0 3px rgba(212,164,55,0.15) !important;
-        background: rgba(255,255,255,0.11) !important;
+        background: rgba(255,255,255,0.09) !important;
+        box-shadow: 0 0 0 2px rgba(212,164,55,0.12) !important;
+        outline: none !important;
     }
-    .stTextInput label, .stTextInput label p {
-        color: rgba(255,255,255,0.75) !important;
-    }
-    .stTextInput { margin-bottom: 12px !important; }
-    /* Dark card container */
+    .stTextInput label, .stTextInput label p { color: rgba(255,255,255,0.60) !important; font-size: 11px !important; letter-spacing: 0.06em !important; text-transform: uppercase !important; }
+    .stTextInput { margin-bottom: 10px !important; }
+    /* Glass card */
     [data-testid="stVerticalBlockBorderWrapper"] {
-        background: rgba(255,255,255,0.06) !important;
-        border: 1px solid rgba(255,255,255,0.15) !important;
-        border-radius: 10px !important;
+        background: rgba(255,255,255,0.04) !important;
+        border: 1px solid rgba(255,255,255,0.10) !important;
+        border-radius: 12px !important;
+        backdrop-filter: blur(12px) !important;
     }
-    /* Blue submit button — override global navy rule.
-       Safe: this block only renders on the unauthenticated landing page. */
+    /* CTA button */
     [data-testid="stForm"] .stButton > button,
     [data-testid="stFormSubmitButton"] > button {
-        background-color: #4285F4 !important;
-        border-color: #4285F4 !important;
-        color: #FFFFFF !important;
-        font-weight: 500 !important;
-        height: 44px !important;
-        font-size: 14px !important;
-        border-radius: 6px !important;
+        background: #D4A437 !important; border-color: #D4A437 !important;
+        color: #0B1F3A !important; font-weight: 700 !important;
+        height: 42px !important; font-size: 13px !important;
+        border-radius: 6px !important; letter-spacing: 0.04em !important;
+        transition: background 0.15s, box-shadow 0.15s !important;
     }
     [data-testid="stForm"] .stButton > button:hover,
     [data-testid="stFormSubmitButton"] > button:hover {
-        background-color: #357AE8 !important;
-        border-color: #357AE8 !important;
-        box-shadow: 0 4px 14px rgba(66,133,244,0.4) !important;
+        background: #C49530 !important; border-color: #C49530 !important;
+        box-shadow: 0 4px 16px rgba(212,164,55,0.35) !important;
     }
+    /* Error message */
+    .stAlert { background: rgba(239,68,68,0.12) !important; border-color: rgba(239,68,68,0.3) !important; color: #FCA5A5 !important; border-radius: 6px !important; }
     </style>
     """, unsafe_allow_html=True)
 
+    # ── Top bar ───────────────────────────────────────────────────────────────
     st.markdown("""
-    <div style="text-align: center; margin-bottom: 40px;">
-        <div style="font-size: 32px; font-weight: 700; color: #FFFFFF;
-             letter-spacing: -0.02em; line-height: 1.1;
-             display: inline-block; padding-bottom: 8px;
-             border-bottom: 3px solid #D4A437;">
-            INDmoney Investor Ops
-        </div>
-        <div style="max-width: 600px; margin: 24px auto 0 auto;
-             font-size: 16px; color: rgba(255,255,255,0.9);
-             font-weight: 400; line-height: 1.6; text-align: center;">
-            Unified intelligence platform for fintech operations<br>
-            RAG-powered knowledge base &nbsp;•&nbsp; AI sentiment analysis &nbsp;•&nbsp; Voice automation<br>
-            Human-in-the-loop workflow orchestration
-        </div>
+<div style="display:flex; align-items:center; justify-content:space-between;
+     padding:14px 0 24px 0; border-bottom:1px solid rgba(255,255,255,0.07); margin-bottom:32px;">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <div style="width:30px; height:30px; background:#D4A437; border-radius:6px;
+         display:flex; align-items:center; justify-content:center;
+         font-size:15px; font-weight:800; color:#0B1F3A;">I</div>
+    <div>
+      <div style="font-size:14px; font-weight:700; color:#FFFFFF; letter-spacing:0.01em;">INDmoney Ops Suite</div>
+      <div style="font-size:10px; color:rgba(255,255,255,0.4); letter-spacing:0.06em; text-transform:uppercase;">Investor Operations &amp; Intelligence</div>
     </div>
-    """, unsafe_allow_html=True)
-
-    with st.container(border=True):
-        st.markdown(
-            '<div style="padding: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #FFFFFF;">Sign In</div>',
-            unsafe_allow_html=True,
-        )
-        with st.form("login_form"):
-            name_input = st.text_input("Username", placeholder="Enter your name")
-            email_input = st.text_input("Email", placeholder="you@indmoney.com")
-            submitted = st.form_submit_button(
-                "Access Dashboard",
-                use_container_width=True,
-                type="primary",
-            )
-            if submitted:
-                if name_input.strip() and email_input.strip():
-                    st.session_state.authenticated = True
-                    st.session_state.username = name_input.strip()
-                    st.session_state.email = email_input.strip()
-                    st.rerun()
-                else:
-                    st.error("Please enter both username and email address.")
-
-    st.markdown("""
-    <div style="text-align: center; margin-top: 32px;
-         font-size: 12px; color: rgba(255,255,255,0.6);">
-        Capstone Project 2026
+  </div>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <div style="display:flex; align-items:center; gap:6px;">
+      <div style="width:7px; height:7px; border-radius:50%; background:#10B981; box-shadow:0 0 6px rgba(16,185,129,0.6);"></div>
+      <span style="font-size:11px; color:rgba(255,255,255,0.5);">All systems operational</span>
     </div>
-    """, unsafe_allow_html=True)
+    <div style="font-size:11px; color:rgba(255,255,255,0.3); padding:3px 10px;
+         border:1px solid rgba(255,255,255,0.1); border-radius:4px;">v2.0 · 2026</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    # ── Two-column layout: left hero + right login ────────────────────────────
+    col_hero, col_form = st.columns([6, 4], gap="large")
+
+    with col_hero:
+        st.markdown("""
+<div style="padding-top:20px;">
+  <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase;
+       color:#D4A437; margin-bottom:14px;">AI-Powered Operations Platform</div>
+  <div style="font-size:36px; font-weight:700; color:#FFFFFF; line-height:1.15;
+       letter-spacing:-0.02em; margin-bottom:16px;">
+    Investor Ops &<br>Intelligence Suite
+  </div>
+  <div style="font-size:14px; color:rgba(255,255,255,0.55); line-height:1.75; margin-bottom:32px; max-width:400px;">
+    Enterprise-grade AI command center for fintech operations teams.
+    Real-time intelligence, automated workflows, and human-in-the-loop oversight.
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; max-width:420px;">
+    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+         border-radius:8px; padding:14px 16px;">
+      <div style="font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase;
+           letter-spacing:0.08em; margin-bottom:6px;">Knowledge Base</div>
+      <div style="font-size:13px; color:rgba(255,255,255,0.80); font-weight:500;">Hybrid RAG · BM25 + Vector</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+         border-radius:8px; padding:14px 16px;">
+      <div style="font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase;
+           letter-spacing:0.08em; margin-bottom:6px;">Weekly Pulse</div>
+      <div style="font-size:13px; color:rgba(255,255,255,0.80); font-weight:500;">AI Sentiment Analysis</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+         border-radius:8px; padding:14px 16px;">
+      <div style="font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase;
+           letter-spacing:0.08em; margin-bottom:6px;">Voice Scheduler</div>
+      <div style="font-size:13px; color:rgba(255,255,255,0.80); font-weight:500;">FSM Voice Agent · TTS</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+         border-radius:8px; padding:14px 16px;">
+      <div style="font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase;
+           letter-spacing:0.08em; margin-bottom:6px;">HITL Approval</div>
+      <div style="font-size:13px; color:rgba(255,255,255,0.80); font-weight:500;">Human-in-the-Loop Queue</div>
+    </div>
+  </div>
+
+  <div style="margin-top:32px; padding-top:24px; border-top:1px solid rgba(255,255,255,0.07);
+       display:flex; gap:24px;">
+    <div>
+      <div style="font-size:22px; font-weight:700; color:#D4A437;">300+</div>
+      <div style="font-size:11px; color:rgba(255,255,255,0.4);">Reviews Analysed</div>
+    </div>
+    <div>
+      <div style="font-size:22px; font-weight:700; color:#D4A437;">5</div>
+      <div style="font-size:11px; color:rgba(255,255,255,0.4);">AI Modules</div>
+    </div>
+    <div>
+      <div style="font-size:22px; font-weight:700; color:#D4A437;">78%</div>
+      <div style="font-size:11px; color:rgba(255,255,255,0.4);">RAG Accuracy</div>
+    </div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    with col_form:
+        st.markdown("""
+<div style="padding-top:20px;">
+  <div style="font-size:10px; font-weight:700; letter-spacing:0.10em; text-transform:uppercase;
+       color:rgba(255,255,255,0.4); margin-bottom:6px;">Secure Access</div>
+  <div style="font-size:20px; font-weight:700; color:#FFFFFF; margin-bottom:4px;">Sign in to your workspace</div>
+  <div style="font-size:13px; color:rgba(255,255,255,0.4); margin-bottom:24px;">
+    INDmoney internal operations portal
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+        with st.container(border=True):
+            with st.form("login_form"):
+                name_input  = st.text_input("Username", placeholder="Enter your name")
+                email_input = st.text_input("Email",    placeholder="you@indmoney.com")
+                submitted   = st.form_submit_button("Access Dashboard →",
+                                                    use_container_width=True,
+                                                    type="primary")
+                if submitted:
+                    if name_input.strip() and email_input.strip():
+                        st.session_state.authenticated = True
+                        st.session_state.username = name_input.strip()
+                        st.session_state.email    = email_input.strip()
+                        st.rerun()
+                    else:
+                        st.error("Please enter both username and email.")
+
+        st.markdown("""
+<div style="margin-top:16px; padding:14px 16px;
+     background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
+     border-radius:8px;">
+  <div style="font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+       color:rgba(255,255,255,0.35); margin-bottom:10px;">System Status</div>
+  <div style="display:flex; flex-direction:column; gap:7px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:12px; color:rgba(255,255,255,0.55);">Knowledge Base</span>
+      <span style="font-size:10px; font-weight:600; color:#10B981; background:rgba(16,185,129,0.1);
+            padding:2px 8px; border-radius:4px; border:1px solid rgba(16,185,129,0.2);">Online</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:12px; color:rgba(255,255,255,0.55);">AI Inference (Groq)</span>
+      <span style="font-size:10px; font-weight:600; color:#10B981; background:rgba(16,185,129,0.1);
+            padding:2px 8px; border-radius:4px; border:1px solid rgba(16,185,129,0.2);">Online</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:12px; color:rgba(255,255,255,0.55);">Review Pipeline</span>
+      <span style="font-size:10px; font-weight:600; color:#10B981; background:rgba(16,185,129,0.1);
+            padding:2px 8px; border-radius:4px; border:1px solid rgba(16,185,129,0.2);">Online</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:12px; color:rgba(255,255,255,0.55);">HITL Queue</span>
+      <span style="font-size:10px; font-weight:600; color:#10B981; background:rgba(16,185,129,0.1);
+            padding:2px 8px; border-radius:4px; border:1px solid rgba(16,185,129,0.2);">Online</span>
+    </div>
+  </div>
+</div>
+<div style="margin-top:12px; text-align:center; font-size:11px; color:rgba(255,255,255,0.22);">
+  INDmoney Capstone 2026 &nbsp;·&nbsp; Authorized Access Only
+</div>
+""", unsafe_allow_html=True)
 
     st.stop()
 
