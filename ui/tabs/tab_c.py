@@ -117,18 +117,6 @@ _CSS = """
 .vc-slabel-pending { font-size:11px; font-weight:400; color:#9CA3AF; }
 .vc-step-sub { font-size:10px; color:#9CA3AF; margin-top:1px; }
 
-/* Mic divider */
-.vc-or-divider {
-    display:flex; align-items:center; gap:10px;
-    margin:12px 0 8px; color:#D1D5DB;
-}
-.vc-or-divider::before, .vc-or-divider::after {
-    content:''; flex:1; height:1px; background:#E8EDF3;
-}
-.vc-or-text {
-    font-size:10px; font-weight:700; letter-spacing:0.08em;
-    text-transform:uppercase; color:#9CA3AF; white-space:nowrap;
-}
 
 /* Booking card */
 .vc-booking {
@@ -345,15 +333,23 @@ def render_tab_c():
 </div>
 """, unsafe_allow_html=True)
 
-        # Text input row
+        # Input row: text | mic | send
         st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
-        inp_col, btn_col = st.columns([5, 1])
+        inp_col, mic_col, btn_col = st.columns([5, 1, 1])
         with inp_col:
             text_input = st.text_input(
                 "Message",
                 key="voice_text_input",
                 placeholder="Type your message…",
                 label_visibility="collapsed",
+            )
+        with mic_col:
+            audio_bytes = audio_recorder(
+                text="",
+                recording_color="#5B7CFA",
+                neutral_color="#0B1F3A",
+                pause_threshold=2.5,
+                sample_rate=16000,
             )
         with btn_col:
             send_clicked = st.button(
@@ -375,20 +371,6 @@ def render_tab_c():
             st.session_state.pop("voice_text_input", None)
             time.sleep(0.5)
             st.rerun()
-
-        # Mic area
-        st.markdown("""
-<div class="vc-or-divider"><span class="vc-or-text">or use voice</span></div>
-""", unsafe_allow_html=True)
-        _, mic_mid, _ = st.columns([1, 2, 1])
-        with mic_mid:
-            audio_bytes = audio_recorder(
-                text="Hold to speak",
-                recording_color="#5B7CFA",
-                neutral_color="#0B1F3A",
-                pause_threshold=2.5,
-                sample_rate=16000,
-            )
 
     # ── Audio processing (unchanged logic) ───────────────────────────────────
     if audio_bytes is not None:
