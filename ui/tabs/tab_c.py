@@ -292,14 +292,9 @@ def render_tab_c():
 """, unsafe_allow_html=True)
         if st.button("Complete Booking", type="primary", use_container_width=True):
             st.session_state["booking_context"]["user_email"] = user_email
-            st.session_state["booking_completed"] = True
-            st.balloons()
-
-        if st.session_state.get("booking_completed"):
             st.success(f"Booking confirmed for {user_email}")
-            if st.button("Go to Action Approval", key="goto_approval", use_container_width=True):
-                st.session_state["sidebar_nav"] = "Action Approval"
-                st.rerun()
+            st.info("Go to the **Action Approval** tab to submit this booking to the advisor.")
+            st.balloons()
 
     st.markdown("<div style='margin-top: 16px;'></div>", unsafe_allow_html=True)
     if st.button("Start New Conversation", use_container_width=True):
