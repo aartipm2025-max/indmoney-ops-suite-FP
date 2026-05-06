@@ -434,36 +434,58 @@ if not st.session_state.authenticated:
     Real-time intelligence, automated workflows, and human-in-the-loop oversight.
   </div>
 
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; max-width:420px;">
-    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
-         border-radius:8px; padding:14px 16px;">
-      <div style="font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase;
-           letter-spacing:0.08em; margin-bottom:6px;">Knowledge Base</div>
-      <div style="font-size:13px; color:rgba(255,255,255,0.80); font-weight:500;">Hybrid RAG · BM25 + Vector</div>
+  <style>
+  .fc {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 10px;
+    padding: 18px 20px;
+    transition: background 0.18s, border-color 0.18s, transform 0.18s;
+    cursor: default;
+  }
+  .fc:hover {
+    background: rgba(91,124,250,0.09);
+    border-color: rgba(91,124,250,0.35);
+    transform: translateY(-2px);
+  }
+  .fc-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: rgba(255,255,255,0.38);
+    margin-bottom: 8px;
+  }
+  .fc-title {
+    font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.88);
+    line-height: 1.35; margin-bottom: 5px;
+  }
+  .fc-desc {
+    font-size: 11px; color: rgba(255,255,255,0.38); line-height: 1.5;
+  }
+  </style>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:440px;">
+    <div class="fc">
+      <div class="fc-label">01 · Knowledge Base</div>
+      <div class="fc-title">Hybrid RAG Engine</div>
+      <div class="fc-desc">BM25 + Vector · Source-cited answers</div>
     </div>
-    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
-         border-radius:8px; padding:14px 16px;">
-      <div style="font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase;
-           letter-spacing:0.08em; margin-bottom:6px;">Weekly Pulse</div>
-      <div style="font-size:13px; color:rgba(255,255,255,0.80); font-weight:500;">AI Sentiment Analysis</div>
+    <div class="fc">
+      <div class="fc-label">02 · Weekly Pulse</div>
+      <div class="fc-title">AI Sentiment Intelligence</div>
+      <div class="fc-desc">Theme extraction · Trend analysis</div>
     </div>
-    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
-         border-radius:8px; padding:14px 16px;">
-      <div style="font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase;
-           letter-spacing:0.08em; margin-bottom:6px;">Voice Scheduler</div>
-      <div style="font-size:13px; color:rgba(255,255,255,0.80); font-weight:500;">FSM Voice Agent · TTS</div>
+    <div class="fc">
+      <div class="fc-label">03 · Voice Scheduler</div>
+      <div class="fc-title">FSM Voice Agent</div>
+      <div class="fc-desc">Browser TTS · Booking confirmation</div>
     </div>
-    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
-         border-radius:8px; padding:14px 16px;">
-      <div style="font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase;
-           letter-spacing:0.08em; margin-bottom:6px;">HITL Approval</div>
-      <div style="font-size:13px; color:rgba(255,255,255,0.80); font-weight:500;">Human-in-the-Loop Queue</div>
+    <div class="fc">
+      <div class="fc-label">04 · HITL Approval</div>
+      <div class="fc-title">Human-in-the-Loop Queue</div>
+      <div class="fc-desc">Calendar · Email · Doc operations</div>
     </div>
-    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
-         border-radius:8px; padding:14px 16px; grid-column: span 2;">
-      <div style="font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase;
-           letter-spacing:0.08em; margin-bottom:6px;">Evaluation</div>
-      <div style="font-size:13px; color:rgba(255,255,255,0.80); font-weight:500;">RAG · Safety · End-to-End Evals</div>
+    <div class="fc" style="grid-column:span 2;">
+      <div class="fc-label">05 · Evaluation</div>
+      <div class="fc-title">RAG · Safety · End-to-End Evals</div>
+      <div class="fc-desc">Automated quality gates · Pass/fail reporting · Compliance checks</div>
     </div>
   </div>
 
