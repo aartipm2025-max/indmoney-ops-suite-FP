@@ -41,12 +41,10 @@ def _display_answer(result: dict) -> None:
 
     route_key = result.get("route", "")
     badge_cls, badge_label = _ROUTE_BADGE.get(route_key, ("route-default", route_key or "N/A"))
-    model_name = result.get("model_name", "N/A")
 
     st.markdown(f"""
 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
     <span class="route-badge {badge_cls}">{badge_label}</span>
-    <span style="font-size: 12px; color: #8A9BB0;">via {model_name}</span>
 </div>
 """, unsafe_allow_html=True)
 
