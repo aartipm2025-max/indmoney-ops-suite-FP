@@ -267,10 +267,10 @@ def _sev_class(sev: str) -> str:
 
 def _trend_chip(delta: float) -> str:
     if delta > 5:
-        return f'<span class="trend-chip trend-up">↑ {delta:+.0f}%</span>'
+        return f'<span class="trend-chip trend-up">Rising {delta:+.0f}%</span>'
     if delta < -5:
-        return f'<span class="trend-chip trend-down">↓ {delta:.0f}%</span>'
-    return '<span class="trend-chip trend-flat">→ Stable</span>'
+        return f'<span class="trend-chip trend-down">Falling {delta:.0f}%</span>'
+    return '<span class="trend-chip trend-flat">Stable</span>'
 
 
 def _render_header(data: dict) -> None:
@@ -300,27 +300,26 @@ def _render_metrics(data: dict) -> None:
     sb = data["sb"]
     neg_delta = data["neg_delta"]
     fastest = data["fastest"]
-    delta_sign = "▲" if neg_delta > 0 else "▼"
+    delta_dir   = "up" if neg_delta > 0 else "down"
     delta_color = "#DC2626" if neg_delta > 0 else "#15803D"
 
     st.markdown('<div class="section-label">Intelligence Metrics</div>', unsafe_allow_html=True)
 
     c1, c2, c3, c4 = st.columns(4)
     cards = [
-        (c1, "⚑", str(sum(1 for t in data["themes"] if t["severity"] == "CRITICAL")),
+        (c1, str(sum(1 for t in data["themes"] if t["severity"] == "CRITICAL")),
          "Critical Themes This Week"),
-        (c2, "◎", f"{sb['neg']}%",
-         f"Negative Sentiment  {delta_sign} {abs(neg_delta):.1f}pp WoW"),
-        (c3, "◈", "Trading & Orders",
+        (c2, f"{sb['neg']}%",
+         f"Negative Sentiment · {abs(neg_delta):.1f}pp WoW"),
+        (c3, "Trading & Orders",
          "Most Affected User Journey"),
-        (c4, "↑", fastest["name"].split("&")[0].strip()[:18] + "…" if "&" in fastest["name"] else fastest["name"][:20],
-         f"Fastest Growing Issue  +{fastest['delta']:.0f}% WoW"),
+        (c4, fastest["name"].split("&")[0].strip()[:18] + "…" if "&" in fastest["name"] else fastest["name"][:20],
+         f"Fastest Growing Issue · +{fastest['delta']:.0f}% WoW"),
     ]
-    for col, icon, val, label in cards:
+    for col, val, label in cards:
         with col:
             st.markdown(f"""
 <div class="imc">
-  <div class="imc-icon">{icon}</div>
   <div class="imc-val">{val}</div>
   <div class="imc-label">{label}</div>
 </div>
