@@ -187,7 +187,17 @@ def get_all_ops() -> list[dict]:
     """List all operations with status."""
     conn = _get_conn()
     try:
-        rows = conn.execute("SELECT id, op_type, status, created_at, approved_at, executed_at, reject_reason, external_ids_json FROM pending_ops ORDER BY created_at DESC").fetchall()
-        return [{"id": r[0], "op_type": r[1], "status": r[2], "created_at": r[3], "approved_at": r[4], "executed_at": r[5], "reject_reason": r[6], "external_ids": json.loads(r[7] or "{}")} for r in rows]
+        rows = conn.execute(
+            "SELECT id, op_type, status, created_at, approved_at, executed_at, "
+            "reject_reason, external_ids_json, request_id, payload_json "
+            "FROM pending_ops ORDER BY created_at DESC"
+        ).fetchall()
+        return [{
+            "id": r[0], "op_type": r[1], "status": r[2], "created_at": r[3],
+            "approved_at": r[4], "executed_at": r[5], "reject_reason": r[6],
+            "external_ids": json.loads(r[7] or "{}"),
+            "request_id": r[8] or "",
+            "payload": json.loads(r[9] or "{}"),
+        } for r in rows]
     finally:
         conn.close()

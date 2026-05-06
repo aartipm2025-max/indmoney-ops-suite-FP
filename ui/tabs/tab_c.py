@@ -174,6 +174,13 @@ _CSS = """
 """
 
 
+def _voice_input_submit():
+    val = (st.session_state.get("voice_text_input") or "").strip()
+    if val:
+        st.session_state["_pending_voice_msg"] = val
+    st.session_state["voice_text_input"] = ""
+
+
 def speak_text(text: str):
     clean = re.sub(r'\[.*?\]', '', text)
     clean = re.sub(r'[*_~`]', '', clean)
@@ -387,6 +394,7 @@ def render_tab_c():
                 key="voice_text_input",
                 placeholder="Type your message…",
                 label_visibility="collapsed",
+                on_change=_voice_input_submit,
             )
         with mic_col:
             audio_bytes = audio_recorder(
@@ -401,9 +409,17 @@ def render_tab_c():
                 "Send", key="send_text", type="primary", use_container_width=True
             )
 
-        if send_clicked and text_input:
-            st.session_state["voice_history"].append({"role": "user", "text": text_input})
-            result = st.session_state["voice_agent"].process_turn(text_input)
+        # on_change callback fires on Enter or focus-loss (e.g. clicking Send),
+        # storing the value in _pending_voice_msg and clearing the widget.
+        # The send_clicked fallback covers the rare case where on_change didn't fire.
+        pending_msg = st.session_state.pop("_pending_voice_msg", None)
+        if send_clicked and text_input and not pending_msg:
+            pending_msg = text_input
+            st.session_state["voice_text_input"] = ""
+
+        if pending_msg:
+            st.session_state["voice_history"].append({"role": "user", "text": pending_msg})
+            result = st.session_state["voice_agent"].process_turn(pending_msg)
             st.session_state["voice_history"].append({
                 "role": "agent", "text": result["response"], "state": result["state"],
             })
@@ -413,7 +429,6 @@ def render_tab_c():
                 )
                 speak_text(f"Booking confirmed! Your booking code is {result['booking_code']}")
             st.session_state["voice_turn_count"] += 1
-            st.session_state.pop("voice_text_input", None)
             time.sleep(0.5)
             st.rerun()
 

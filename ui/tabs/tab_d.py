@@ -13,7 +13,7 @@ def render_tab_d():
     st.header("Action Approval")
     st.caption("Review and approve/reject MCP actions before they execute on Google services.")
 
-    from pillars.pillar_c_hitl.approval import get_pending_ops, get_all_ops, approve, reject, REJECT_REASONS
+    from pillars.pillar_c_hitl.approval import get_all_ops, approve, reject, REJECT_REASONS
 
     # ── Session-level ops history (survives tab-switches; immune to DB wipes) ──
     if "ops_history" not in st.session_state:
@@ -97,46 +97,83 @@ def render_tab_d():
 
     st.markdown("---")
 
-    # ── Pending Approvals ─────────────────────────────────────────────────────
-    st.markdown('<div class="section-label">Pending Approvals</div>', unsafe_allow_html=True)
-    pending = get_pending_ops()
+    # ── Booking Approvals (all bookings) ─────────────────────────────────────
+    st.markdown('<div class="section-label">Booking Approvals</div>', unsafe_allow_html=True)
 
-    if not pending:
+    import re
+    from collections import OrderedDict
+
+    all_ops = get_all_ops()
+
+    # Group ops by booking_code (request_id), preserving insertion order
+    bookings_map: dict = OrderedDict()
+    for op in reversed(all_ops):  # oldest first within each group
+        bc = (op.get("request_id") or "").strip()
+        if not bc:
+            p = op.get("payload", {}).get("payload", {})
+            m = re.search(r'IND-[A-Z]{4}-\d{8}-\d{3}',
+                          p.get("summary", "") + p.get("subject", ""))
+            bc = m.group(0) if m else ""
+        if not bc:
+            continue  # skip orphaned ops with no booking code
+        if bc not in bookings_map:
+            bookings_map[bc] = []
+        bookings_map[bc].append(op)
+
+    if not bookings_map:
         st.markdown("""
 <div class="empty-state">
     <div class="empty-state-icon">✅</div>
-    <h3>All caught up!</h3>
-    <p>No pending operations requiring approval.</p>
+    <h3>No bookings yet</h3>
+    <p>Complete a booking in <strong>Voice Scheduler</strong> to see it here.</p>
 </div>
 """, unsafe_allow_html=True)
     else:
-        import re
-        from collections import defaultdict
+        # Pending groups first (newest pending on top), then rest newest-first
+        def _sort_key(item):
+            bc, ops_list = item
+            has_pending = any(op["status"] == "pending" for op in ops_list)
+            latest = max(op.get("created_at", "") for op in ops_list)
+            return (0 if has_pending else 1, latest)
 
-        bookings = defaultdict(list)
-        for op in pending:
-            payload = op.get("payload", {}).get("payload", {})
-            booking_code = payload.get("booking_code")
-            if not booking_code:
-                summary = payload.get("summary", "")
-                subject = payload.get("subject", "")
-                match = re.search(r'IND-[A-Z]{4}-\d{8}-\d{3}', summary + subject)
-                booking_code = match.group(0) if match else "UNKNOWN"
-            bookings[booking_code].append(op)
+        for booking_code, ops in sorted(bookings_map.items(), key=_sort_key):
+            pending_in_group = [op for op in ops if op["status"] == "pending"]
+            statuses = [op["status"] for op in ops]
 
-        for booking_code, ops in bookings.items():
-            first_payload = ops[0].get("payload", {}).get("payload", {})
-
-            if "summary" in first_payload:
-                parts = first_payload["summary"].split(" — ")
-                topic = parts[1] if len(parts) > 1 else "General Consultation"
-                start_time = first_payload.get("start", "").replace("T", " ").split("+")[0]
-            elif "subject" in first_payload:
-                topic = "Advisor Briefing"
-                start_time = "See calendar"
+            if pending_in_group:
+                overall_status = "pending"
+                status_label   = "Pending Review"
+                badge_cls      = "status-pending"
+            elif all(s in ("executed", "approved") for s in statuses):
+                overall_status = "executed"
+                status_label   = "Confirmed"
+                badge_cls      = "status-pass"
+            elif "rejected" in statuses:
+                overall_status = "rejected"
+                status_label   = "Rejected"
+                badge_cls      = "status-rejected"
+            elif "failed" in statuses:
+                overall_status = "failed"
+                status_label   = "Failed"
+                badge_cls      = "status-fail"
             else:
-                topic = "Document Update"
-                start_time = "N/A"
+                overall_status = statuses[0] if statuses else "unknown"
+                status_label   = overall_status.title()
+                badge_cls      = "status-pending"
+
+            # Extract topic / scheduled time from calendar op
+            topic      = "General Consultation"
+            start_time = "N/A"
+            for op in ops:
+                p = op.get("payload", {}).get("payload", {})
+                if "summary" in p:
+                    parts = p["summary"].split(" — ")
+                    topic      = parts[1] if len(parts) > 1 else topic
+                    start_time = p.get("start", "").replace("T", " ").split("+")[0]
+                    break
+                elif "subject" in p and start_time == "N/A":
+                    topic      = "Advisor Briefing"
+                    start_time = "See calendar"
 
             st.markdown(f"""
 <div class="hitl-op-card">
@@ -152,7 +189,7 @@ def render_tab_d():
                 {booking_code}
             </div>
         </div>
-        <span class="status-pending">Pending Review</span>
+        <span class="{badge_cls}">{status_label}</span>
     </div>
     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;
          background: #F6F8FB; border-radius: 6px; padding: 14px 16px;
@@ -178,78 +215,94 @@ def render_tab_d():
 </div>
 """, unsafe_allow_html=True)
 
-            col1, col2 = st.columns([1, 1])
+            if pending_in_group:
+                col1, col2 = st.columns([1, 1])
 
-            with col1:
-                if st.button(
-                    f"Approve All {len(ops)} Actions",
-                    key=f"approve_all_{booking_code}",
-                    type="primary",
-                    use_container_width=True,
-                ):
-                    with st.spinner("Executing all actions…"):
-                        results = [approve(op["id"]) for op in ops]
-                        now_iso = datetime.now(timezone.utc).isoformat()
-                        success_count = sum(1 for r in results if r.get("success"))
-                        is_demo = any(r.get("demo") for r in results)
+                with col1:
+                    if st.button(
+                        f"Approve All {len(pending_in_group)} Actions",
+                        key=f"approve_all_{booking_code}",
+                        type="primary",
+                        use_container_width=True,
+                    ):
+                        with st.spinner("Executing all actions…"):
+                            results = [approve(op["id"]) for op in pending_in_group]
+                            now_iso = datetime.now(timezone.utc).isoformat()
+                            success_count = sum(1 for r in results if r.get("success"))
+                            is_demo = any(r.get("demo") for r in results)
 
-                        # Save every result to session history immediately
-                        for op_item, r in zip(ops, results):
-                            _track_op(
-                                op_item["op_type"],
-                                "executed" if r.get("success") else "failed",
-                                op_item.get("created_at", now_iso),
-                                demo=r.get("demo", False),
-                            )
-
-                        if success_count == len(ops):
-                            if is_demo:
-                                st.info(
-                                    f"All {len(ops)} actions simulated (demo mode — "
-                                    "Google credentials not configured).",
-                                    icon="ℹ️",
+                            for op_item, r in zip(pending_in_group, results):
+                                _track_op(
+                                    op_item["op_type"],
+                                    "executed" if r.get("success") else "failed",
+                                    op_item.get("created_at", now_iso),
+                                    demo=r.get("demo", False),
                                 )
-                            else:
-                                st.success(f"All {len(ops)} actions executed successfully.")
-                                st.balloons()
-                            for op_item, r in zip(ops, results):
-                                link = r.get("link")
-                                if link and not r.get("demo"):
-                                    label_map = {
-                                        "calendar_hold": "Open Calendar Event",
-                                        "doc_append":    "Open Google Doc",
-                                    }
-                                    label = label_map.get(op_item["op_type"])
-                                    if label:
-                                        st.markdown(f"[{label}]({link})")
-                        else:
-                            st.warning(f"{success_count}/{len(ops)} actions succeeded.")
-                        st.rerun()
 
-            with col2:
-                with st.popover("Reject All", use_container_width=True):
-                    reason = st.selectbox(
-                        "Reason:",
-                        REJECT_REASONS,
-                        key=f"reject_reason_{booking_code}",
-                    )
-                    reason_text = st.text_area(
-                        "Details:",
-                        key=f"reject_text_{booking_code}",
-                        placeholder="Optional explanation…",
-                    )
-                    if st.button("Confirm Rejection", key=f"reject_confirm_{booking_code}"):
-                        now_iso = datetime.now(timezone.utc).isoformat()
-                        for op_item in ops:
-                            reject(op_item["id"], reason, reason_text)
-                            _track_op(op_item["op_type"], "rejected",
-                                      op_item.get("created_at", now_iso))
-                        st.warning(f"Booking {booking_code} rejected.")
-                        st.rerun()
+                            if success_count == len(pending_in_group):
+                                if is_demo:
+                                    st.info(
+                                        f"All {len(pending_in_group)} actions simulated (demo mode — "
+                                        "Google credentials not configured).",
+                                        icon="ℹ️",
+                                    )
+                                else:
+                                    st.success(f"All {len(pending_in_group)} actions executed successfully.")
+                                    st.balloons()
+                                for op_item, r in zip(pending_in_group, results):
+                                    link = r.get("link")
+                                    if link and not r.get("demo"):
+                                        label_map = {
+                                            "calendar_hold": "Open Calendar Event",
+                                            "doc_append":    "Open Google Doc",
+                                        }
+                                        label = label_map.get(op_item["op_type"])
+                                        if label:
+                                            st.markdown(f"[{label}]({link})")
+                            else:
+                                st.warning(f"{success_count}/{len(pending_in_group)} actions succeeded.")
+                            st.rerun()
+
+                with col2:
+                    with st.popover("Reject All", use_container_width=True):
+                        reason = st.selectbox(
+                            "Reason:",
+                            REJECT_REASONS,
+                            key=f"reject_reason_{booking_code}",
+                        )
+                        reason_text = st.text_area(
+                            "Details:",
+                            key=f"reject_text_{booking_code}",
+                            placeholder="Optional explanation…",
+                        )
+                        if st.button("Confirm Rejection", key=f"reject_confirm_{booking_code}"):
+                            now_iso = datetime.now(timezone.utc).isoformat()
+                            for op_item in pending_in_group:
+                                reject(op_item["id"], reason, reason_text)
+                                _track_op(op_item["op_type"], "rejected",
+                                          op_item.get("created_at", now_iso))
+                            st.warning(f"Booking {booking_code} rejected.")
+                            st.rerun()
+
+            else:
+                # Non-pending: show status info only
+                executed_at = next(
+                    (op.get("executed_at") or op.get("approved_at") or "" for op in ops
+                     if op.get("executed_at") or op.get("approved_at")), ""
+                )
+                if overall_status == "executed":
+                    ts = f" on {executed_at[:16]}" if executed_at else ""
+                    st.success(f"All actions confirmed{ts}.", icon="✅")
+                elif overall_status == "rejected":
+                    reason_shown = next((op.get("reject_reason") for op in ops
+                                         if op.get("reject_reason")), "")
+                    st.warning(f"Rejected{': ' + reason_shown if reason_shown else ''}.")
+                elif overall_status == "failed":
+                    st.error("One or more actions failed to execute.")
 
             with st.expander("View Technical Details", expanded=False):
                 for i, op in enumerate(ops, 1):
-                    st.caption(f"Action {i}: {op['op_type']}")
+                    st.caption(f"Action {i}: {op['op_type']} — {op['status']}")
                     st.json(op.get("payload", {}), expanded=False)
 
             st.markdown("<div style='margin-bottom: 8px;'></div>", unsafe_allow_html=True)
