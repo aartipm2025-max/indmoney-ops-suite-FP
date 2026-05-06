@@ -340,13 +340,26 @@ hr { border: none; border-top: 1px solid #E8EDF3; margin: 24px 0; }
 ::-webkit-scrollbar-thumb { background: #D1D9E0; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #B0BEC5; }
 
-/* ── Page transition fade-in ──────────────────────────────────────────── */
+/* ── Page transition — initial load ───────────────────────────────────── */
 .main .block-container {
-    animation: pageIn 0.18s ease-out;
+    animation: pageIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 @keyframes pageIn {
-    from { opacity: 0; transform: translateY(5px); }
+    from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Sidebar nav — active item indicator ──────────────────────────────── */
+section[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] {
+    border-left: 3px solid transparent;
+    padding-left: 6px !important;
+    border-radius: 0 4px 4px 0;
+    transition: background 0.15s ease, border-color 0.15s ease, padding 0.15s ease;
+}
+section[data-testid="stSidebar"] .stRadio [data-baseweb="radio"]:has([aria-checked="true"]) {
+    border-left: 3px solid #5B7CFA !important;
+    background: rgba(91,124,250,0.10) !important;
+    border-radius: 0 4px 4px 0;
 }
 
 /* ── Sidebar text legibility ──────────────────────────────────────────── */
@@ -354,6 +367,53 @@ section[data-testid="stSidebar"] p,
 section[data-testid="stSidebar"] span,
 section[data-testid="stSidebar"] div { color: rgba(255,255,255,0.88) !important; }
 </style>
+""", unsafe_allow_html=True)
+
+# ── Navigation cross-fade — fires on every sidebar tab click ─────────────────
+st.markdown("""
+<script>
+(function(){
+    if(window.__iopsTI)return;
+    window.__iopsTI=true;
+
+    var active=false, clickAt=0, safety=null, pending=null;
+
+    function bc(){ return document.querySelector('.main .block-container'); }
+
+    function fadeIn(){
+        var el=bc(); if(!el)return;
+        el.style.transition='opacity 0.28s cubic-bezier(0.22,1,0.36,1),transform 0.28s cubic-bezier(0.22,1,0.36,1)';
+        el.style.opacity='1';
+        el.style.transform='translateY(0)';
+        active=false;
+    }
+
+    /* Fade out on sidebar nav click */
+    document.addEventListener('click', function(e){
+        if(!e.target.closest('[data-testid="stSidebar"] .stRadio')) return;
+        active=true; clickAt=Date.now();
+        var el=bc();
+        if(el){
+            el.style.transition='opacity 0.11s ease-out,transform 0.11s ease-out';
+            el.style.opacity='0.08';
+            el.style.transform='translateY(7px)';
+        }
+        clearTimeout(safety);
+        safety=setTimeout(function(){ fadeIn(); active=false; }, 2000);
+    }, true);
+
+    /* Fade in once Streamlit has swapped in new content */
+    new MutationObserver(function(ms){
+        if(!active || Date.now()-clickAt < 130) return;
+        var relevant=ms.some(function(m){
+            return m.type==='childList' && m.addedNodes.length>0;
+        });
+        if(!relevant) return;
+        clearTimeout(pending);
+        pending=setTimeout(function(){ clearTimeout(safety); fadeIn(); }, 20);
+    }).observe(document.body, {childList:true, subtree:true});
+})();
+</script>
 """, unsafe_allow_html=True)
 
 # ── Landing Page ──────────────────────────────────────────────────────────────
