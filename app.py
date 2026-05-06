@@ -61,7 +61,7 @@ st.markdown("""
     letter-spacing: 0.01em;
 }
 .brand-sub {
-    color: #D4A437;
+    color: #5B7CFA;
     font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.02em;
@@ -129,7 +129,7 @@ p, li { color: #2C3E50; font-size: 14px; line-height: 1.6; }
 .card:hover { box-shadow: 0 4px 12px rgba(11,31,58,0.1); }
 .card-gold {
     background: #FFFFFF; border-radius: 8px; padding: 24px;
-    border: 1px solid #E8EDF3; border-left: 4px solid #D4A437;
+    border: 1px solid #E8EDF3; border-left: 4px solid #5B7CFA;
     box-shadow: 0 1px 3px rgba(11,31,58,0.06); margin-bottom: 16px;
     transition: box-shadow 0.2s ease;
 }
@@ -151,7 +151,7 @@ p, li { color: #2C3E50; font-size: 14px; line-height: 1.6; }
 }
 .metric-card {
     background: #FFFFFF; border-radius: 8px; padding: 18px 20px;
-    border: 1px solid #E8EDF3; border-left: 4px solid #D4A437;
+    border: 1px solid #E8EDF3; border-left: 4px solid #5B7CFA;
     box-shadow: 0 1px 3px rgba(11,31,58,0.06); margin-bottom: 12px;
     transition: box-shadow 0.2s ease;
 }
@@ -159,7 +159,7 @@ p, li { color: #2C3E50; font-size: 14px; line-height: 1.6; }
 
 .answer-bullet {
     background: #FFFFFF; border-radius: 8px; padding: 16px 20px;
-    border: 1px solid #E8EDF3; border-left: 4px solid #D4A437;
+    border: 1px solid #E8EDF3; border-left: 4px solid #5B7CFA;
     box-shadow: 0 1px 2px rgba(11,31,58,0.04); margin-bottom: 10px;
     transition: box-shadow 0.2s ease;
 }
@@ -167,7 +167,7 @@ p, li { color: #2C3E50; font-size: 14px; line-height: 1.6; }
 
 .hitl-op-card {
     background: #FFFFFF; border-radius: 8px; padding: 24px;
-    border: 1px solid #E8EDF3; border-left: 4px solid #D4A437;
+    border: 1px solid #E8EDF3; border-left: 4px solid #5B7CFA;
     box-shadow: 0 1px 3px rgba(11,31,58,0.06); margin-bottom: 16px;
 }
 
@@ -203,8 +203,8 @@ p, li { color: #2C3E50; font-size: 14px; line-height: 1.6; }
     cursor: default; white-space: nowrap;
 }
 .chip:hover {
-    border-color: #D4A437; color: #0B1F3A;
-    box-shadow: 0 0 0 2px rgba(212,164,55,0.12);
+    border-color: #5B7CFA; color: #0B1F3A;
+    box-shadow: 0 0 0 2px rgba(91,124,250,0.15);
 }
 
 /* ── Route Badges ─────────────────────────────────────────────────────────── */
@@ -305,15 +305,15 @@ p, li { color: #2C3E50; font-size: 14px; line-height: 1.6; }
     background-color: #0B1F3A; color: #FFFFFF; border: 1px solid #0B1F3A;
 }
 .stButton > button[kind="primary"]:hover {
-    background-color: #162D4F; border-color: #D4A437;
+    background-color: #162D4F; border-color: #5B7CFA;
     box-shadow: 0 4px 12px rgba(11,31,58,0.2);
 }
 .stButton > button[kind="primary"]:active { transform: scale(0.98); }
 .stButton > button:not([kind="primary"]) {
-    background-color: #FFFFFF; color: #0B1F3A; border: 1px solid #D4A437;
+    background-color: #FFFFFF; color: #0B1F3A; border: 1px solid #5B7CFA;
 }
 .stButton > button:not([kind="primary"]):hover {
-    background-color: #FFF8EC; box-shadow: 0 2px 8px rgba(212,164,55,0.2);
+    background-color: #FFF8EC; box-shadow: 0 2px 8px rgba(91,124,250,0.2);
 }
 .stButton > button:not([kind="primary"]):active { transform: scale(0.98); }
 
@@ -325,7 +325,7 @@ p, li { color: #2C3E50; font-size: 14px; line-height: 1.6; }
 }
 .stTextInput > div > div > input:focus,
 .stTextArea > div > div > textarea:focus {
-    border-color: #D4A437; box-shadow: 0 0 0 3px rgba(212,164,55,0.12);
+    border-color: #5B7CFA; box-shadow: 0 0 0 3px rgba(91,124,250,0.15);
 }
 .stSelectbox > div > div { border: 1.5px solid #E8EDF3; border-radius: 6px; }
 
@@ -378,14 +378,14 @@ if not st.session_state.authenticated:
         background: rgba(255,255,255,0.06) !important;
         border: 1px solid rgba(255,255,255,0.18) !important;
         border-radius: 6px !important;
-        caret-color: #D4A437 !important;
+        caret-color: #5B7CFA !important;
         transition: border-color 0.15s, background 0.15s !important;
     }
     .stTextInput > div > div > input::placeholder { color: rgba(255,255,255,0.35) !important; }
     .stTextInput > div > div > input:focus {
-        border-color: #D4A437 !important;
+        border-color: #5B7CFA !important;
         background: rgba(255,255,255,0.09) !important;
-        box-shadow: 0 0 0 2px rgba(212,164,55,0.12) !important;
+        box-shadow: 0 0 0 2px rgba(91,124,250,0.15) !important;
         outline: none !important;
     }
     .stTextInput label, .stTextInput label p { color: rgba(255,255,255,0.60) !important; font-size: 11px !important; letter-spacing: 0.06em !important; text-transform: uppercase !important; }
@@ -400,7 +400,7 @@ if not st.session_state.authenticated:
     /* CTA button */
     [data-testid="stForm"] .stButton > button,
     [data-testid="stFormSubmitButton"] > button {
-        background: #D4A437 !important; border-color: #D4A437 !important;
+        background: #5B7CFA !important; border-color: #5B7CFA !important;
         color: #0B1F3A !important; font-weight: 700 !important;
         height: 42px !important; font-size: 13px !important;
         border-radius: 6px !important; letter-spacing: 0.04em !important;
@@ -408,8 +408,8 @@ if not st.session_state.authenticated:
     }
     [data-testid="stForm"] .stButton > button:hover,
     [data-testid="stFormSubmitButton"] > button:hover {
-        background: #C49530 !important; border-color: #C49530 !important;
-        box-shadow: 0 4px 16px rgba(212,164,55,0.35) !important;
+        background: #4A6BE8 !important; border-color: #4A6BE8 !important;
+        box-shadow: 0 4px 16px rgba(91,124,250,0.35) !important;
     }
     /* Error message */
     .stAlert { background: rgba(239,68,68,0.12) !important; border-color: rgba(239,68,68,0.3) !important; color: #FCA5A5 !important; border-radius: 6px !important; }
@@ -421,7 +421,7 @@ if not st.session_state.authenticated:
 <div style="display:flex; align-items:center; justify-content:space-between;
      padding:14px 0 24px 0; border-bottom:1px solid rgba(255,255,255,0.07); margin-bottom:32px;">
   <div style="display:flex; align-items:center; gap:12px;">
-    <div style="width:30px; height:30px; background:#D4A437; border-radius:6px;
+    <div style="width:30px; height:30px; background:#5B7CFA; border-radius:6px;
          display:flex; align-items:center; justify-content:center;
          font-size:15px; font-weight:800; color:#0B1F3A;">I</div>
     <div>
@@ -447,7 +447,7 @@ if not st.session_state.authenticated:
         st.markdown("""
 <div style="padding-top:20px;">
   <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase;
-       color:#D4A437; margin-bottom:14px;">AI-Powered Operations Platform</div>
+       color:#5B7CFA; margin-bottom:14px;">AI-Powered Operations Platform</div>
   <div style="font-size:36px; font-weight:700; color:#FFFFFF; line-height:1.15;
        letter-spacing:-0.02em; margin-bottom:16px;">
     Investor Ops &<br>Intelligence Suite
@@ -541,7 +541,7 @@ _NAV_ITEMS = [
 with st.sidebar:
     st.markdown("""
     <div style="padding: 24px 20px;
-         border-bottom: 1px solid #D4A437; margin-bottom: 16px;">
+         border-bottom: 1px solid #5B7CFA; margin-bottom: 16px;">
         <div style="font-size: 18px; font-weight: 600; color: #FFFFFF;
              letter-spacing: -0.01em; line-height: 1.1;">
             INDmoney Ops
@@ -603,7 +603,7 @@ def render_home():
         pending_count = len(get_pending_ops())
     except Exception:
         pending_count = 0
-    card1_accent = "#D4A437" if pending_count > 0 else "#10B981"
+    card1_accent = "#5B7CFA" if pending_count > 0 else "#10B981"
     card1_note   = "Requires attention" if pending_count > 0 else "All caught up"
 
     rag_path    = Path("evals/rag_eval_results.json")
@@ -615,7 +615,7 @@ def render_home():
             rag_pct     = (sum(1 for r in rag_data if r["status"] == "pass") / len(rag_data) * 100) if rag_data else 0
             safety_ok   = all(r["status"] == "pass" for r in safety_data)
             overall     = "PASS" if rag_pct >= 70 and safety_ok else "REVIEW"
-            card2_accent = "#10B981" if overall == "PASS" else "#D4A437"
+            card2_accent = "#10B981" if overall == "PASS" else "#5B7CFA"
             card2_sub    = f"RAG {rag_pct:.0f}%  ·  Safety {'100%' if safety_ok else 'FAIL'}"
         except Exception:
             overall, card2_accent, card2_sub = "ERROR", "#EF4444", "Could not parse"

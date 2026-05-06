@@ -1,7 +1,7 @@
 """
 ui/tabs/tab_b.py — Weekly Product Pulse
 Redesigned operational intelligence dashboard. Stays within existing INDmoney
-light-theme design system (#0B1F3A / #D4A437 / #F5F7FA / #FFFFFF).
+light-theme design system (#0B1F3A / #5B7CFA / #F5F7FA / #FFFFFF).
 """
 from __future__ import annotations
 import sys
@@ -214,7 +214,7 @@ _CSS = """
 .tic-action {
     font-size:12px; color:#0B1F3A; font-weight:600; line-height:1.5;
     background:#F6F8FB; padding:9px 12px; border-radius:6px;
-    border-left:3px solid #D4A437; margin-bottom:10px;
+    border-left:3px solid #5B7CFA; margin-bottom:10px;
 }
 .tic-quote {
     font-size:12px; color:#9CA3AF; font-style:italic;
@@ -243,7 +243,7 @@ _CSS = """
 }
 .rec-eyebrow {
     font-size:10px; font-weight:700; letter-spacing:0.1em;
-    text-transform:uppercase; color:#D4A437; margin-bottom:8px;
+    text-transform:uppercase; color:#5B7CFA; margin-bottom:8px;
 }
 .rec-title { font-size:16px; font-weight:700; color:#FFFFFF; margin-bottom:10px; }
 .rec-body  { font-size:13px; color:rgba(255,255,255,0.90); line-height:1.7; }
