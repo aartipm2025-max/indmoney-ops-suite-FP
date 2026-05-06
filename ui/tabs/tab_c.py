@@ -175,10 +175,12 @@ _CSS = """
 
 
 def _voice_input_submit():
-    val = (st.session_state.get("voice_text_input") or "").strip()
+    idx = st.session_state.get("_voice_input_idx", 0)
+    val = (st.session_state.get(f"voice_text_input_{idx}") or "").strip()
     if val:
         st.session_state["_pending_voice_msg"] = val
-    st.session_state["voice_text_input"] = ""
+    # Bump the key so the next render creates a brand-new empty widget
+    st.session_state["_voice_input_idx"] = idx + 1
 
 
 def speak_text(text: str):
@@ -246,6 +248,8 @@ def render_tab_c():
     # Safety guard (unchanged)
     if "voice_turn_count" not in st.session_state:
         st.session_state["voice_turn_count"] = 0
+    if "_voice_input_idx" not in st.session_state:
+        st.session_state["_voice_input_idx"] = 0
     if st.session_state["voice_turn_count"] > 20:
         st.warning("Conversation limit reached. Starting fresh.")
         for key in ["voice_agent", "voice_history", "booking_context", "voice_turn_count"]:
@@ -391,7 +395,7 @@ def render_tab_c():
         with inp_col:
             text_input = st.text_input(
                 "Message",
-                key="voice_text_input",
+                key=f"voice_text_input_{st.session_state['_voice_input_idx']}",
                 placeholder="Type your message…",
                 label_visibility="collapsed",
                 on_change=_voice_input_submit,
@@ -415,7 +419,7 @@ def render_tab_c():
         pending_msg = st.session_state.pop("_pending_voice_msg", None)
         if send_clicked and text_input and not pending_msg:
             pending_msg = text_input
-            st.session_state["voice_text_input"] = ""
+            st.session_state["_voice_input_idx"] = st.session_state.get("_voice_input_idx", 0) + 1
 
         if pending_msg:
             st.session_state["voice_history"].append({"role": "user", "text": pending_msg})
