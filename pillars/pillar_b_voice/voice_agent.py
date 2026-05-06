@@ -40,18 +40,66 @@ THEME_CODES = {
     "default": "GENR",
 }
 
-def _future_slots() -> list[dict]:
-    from datetime import timedelta
-    today = datetime.now(timezone.utc)
-    d1 = (today + timedelta(days=1)).strftime("%Y-%m-%d")
-    d2 = (today + timedelta(days=2)).strftime("%Y-%m-%d")
-    return [
-        {"date": d1, "time": "10:00 AM IST", "advisor": "Advisor A"},
-        {"date": d1, "time": "02:30 PM IST", "advisor": "Advisor B"},
-        {"date": d2, "time": "11:00 AM IST", "advisor": "Advisor A"},
-    ]
+def _parse_date(text: str) -> str:
+    """Parse natural language date into YYYY-MM-DD. Falls back to tomorrow."""
+    import re
+    from datetime import timedelta, date as _date
 
-MOCK_SLOTS = _future_slots()
+    text_l = text.lower().strip()
+    today  = datetime.now(timezone.utc).date()
+
+    if "today" in text_l:
+        return today.strftime("%Y-%m-%d")
+    if "tomorrow" in text_l:
+        return (today + timedelta(days=1)).strftime("%Y-%m-%d")
+
+    day_names = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]
+    for i, d in enumerate(day_names):
+        if d in text_l:
+            ahead = i - today.weekday()
+            if ahead <= 0:
+                ahead += 7
+            return (today + timedelta(days=ahead)).strftime("%Y-%m-%d")
+
+    m = re.search(r'in\s+(\d+)\s+days?', text_l)
+    if m:
+        return (today + timedelta(days=int(m.group(1)))).strftime("%Y-%m-%d")
+    if "next week" in text_l:
+        return (today + timedelta(days=7)).strftime("%Y-%m-%d")
+
+    month_map = {
+        "jan":1,"feb":2,"mar":3,"apr":4,"may":5,"jun":6,
+        "jul":7,"aug":8,"sep":9,"oct":10,"nov":11,"dec":12,
+        "january":1,"february":2,"march":3,"april":4,"june":6,
+        "july":7,"august":8,"september":9,"october":10,"november":11,"december":12,
+    }
+    for mname, mnum in month_map.items():
+        pat = rf'(\d{{1,2}})(?:st|nd|rd|th)?\s+{mname}|{mname}\s+(\d{{1,2}})(?:st|nd|rd|th)?'
+        m = re.search(pat, text_l)
+        if m:
+            day_n = int(m.group(1) or m.group(2))
+            yr = today.year
+            try:
+                from datetime import date as _d
+                target = _d(yr, mnum, day_n)
+                if target < today:
+                    target = _d(yr + 1, mnum, day_n)
+                return target.strftime("%Y-%m-%d")
+            except ValueError:
+                pass
+
+    m = re.search(r'(\d{4})-(\d{2})-(\d{2})', text_l)
+    if m:
+        return f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
+
+    return (today + timedelta(days=1)).strftime("%Y-%m-%d")
+
+
+def _slots_for_date(date_str: str) -> list[dict]:
+    return [
+        {"date": date_str, "time": "10:00 AM IST", "advisor": "Advisor A"},
+        {"date": date_str, "time": "02:30 PM IST", "advisor": "Advisor B"},
+    ]
 
 
 class VoiceAgent:
@@ -64,6 +112,7 @@ class VoiceAgent:
         self.booking_code = None
         self.turn_count = 0
         self.transcript = []
+        self.available_slots = []
         # Extended topic list: structured TOPICS + top pulse themes (deduped)
         extra = [t["name"] for t in (pulse_themes or [])[:3]]
         self.all_topics = TOPICS + [e for e in extra if e not in TOPICS]
@@ -147,9 +196,11 @@ class VoiceAgent:
 
         elif self.state == VoiceState.TIME_PREFERENCE:
             self.time_pref = user_input
+            target_date = _parse_date(user_input)
+            self.available_slots = _slots_for_date(target_date)
             slots_str = "\n".join(
                 f"  Slot {i+1}: {s['date']} at {s['time']} with {s['advisor']}"
-                for i, s in enumerate(MOCK_SLOTS[:2])
+                for i, s in enumerate(self.available_slots)
             )
             response = (
                 f"Based on your preference, here are two available slots:\n"
@@ -161,8 +212,8 @@ class VoiceAgent:
         elif self.state == VoiceState.SLOT_OFFER:
             try:
                 choice = int(user_input) - 1
-                if 0 <= choice < 2:
-                    self.selected_slot = MOCK_SLOTS[choice]
+                if 0 <= choice < len(self.available_slots):
+                    self.selected_slot = self.available_slots[choice]
                     slot = self.selected_slot
                     response = (
                         f"Confirming: {self.topic} consultation on {slot['date']} "
