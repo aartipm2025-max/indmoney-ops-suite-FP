@@ -396,7 +396,6 @@ if not st.session_state.authenticated:
         background: rgba(255,255,255,0.04) !important;
         border: 1px solid rgba(255,255,255,0.10) !important;
         border-radius: 12px !important;
-        backdrop-filter: blur(12px) !important;
     }
     /* CTA button */
     [data-testid="stForm"] .stButton > button,
