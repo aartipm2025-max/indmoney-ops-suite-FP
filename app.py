@@ -389,6 +389,12 @@ if not st.session_state.authenticated:
         color: rgba(255,255,255,0.75) !important;
     }
     .stTextInput { margin-bottom: 12px !important; }
+    /* Dark card container */
+    [data-testid="stVerticalBlockBorderWrapper"] {
+        background: rgba(255,255,255,0.06) !important;
+        border: 1px solid rgba(255,255,255,0.15) !important;
+        border-radius: 10px !important;
+    }
     /* Blue submit button — override global navy rule.
        Safe: this block only renders on the unauthenticated landing page. */
     [data-testid="stForm"] .stButton > button,
@@ -430,7 +436,7 @@ if not st.session_state.authenticated:
 
     with st.container(border=True):
         st.markdown(
-            '<div style="padding: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #0B1F3A;">Sign In</div>',
+            '<div style="padding: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #FFFFFF;">Sign In</div>',
             unsafe_allow_html=True,
         )
         with st.form("login_form"):
