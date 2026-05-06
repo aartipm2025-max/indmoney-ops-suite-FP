@@ -433,7 +433,7 @@ def render_tab_b():
 
     _, ctrl_r = st.columns([5, 1])
     with ctrl_r:
-        if st.button("↺ Refresh", key="pulse_refresh", use_container_width=True):
+        if st.button("Generate Pulse", key="pulse_generate", use_container_width=True, type="primary"):
             st.cache_data.clear()
             st.rerun()
 
