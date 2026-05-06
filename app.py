@@ -459,6 +459,12 @@ if not st.session_state.authenticated:
            letter-spacing:0.08em; margin-bottom:6px;">HITL Approval</div>
       <div style="font-size:13px; color:rgba(255,255,255,0.80); font-weight:500;">Human-in-the-Loop Queue</div>
     </div>
+    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+         border-radius:8px; padding:14px 16px; grid-column: span 2;">
+      <div style="font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase;
+           letter-spacing:0.08em; margin-bottom:6px;">Evaluation</div>
+      <div style="font-size:13px; color:rgba(255,255,255,0.80); font-weight:500;">RAG · Safety · End-to-End Evals</div>
+    </div>
   </div>
 
 </div>
