@@ -39,15 +39,6 @@ def _display_answer(result: dict) -> None:
         st.error(result["message"])
         return
 
-    route_key = result.get("route", "")
-    badge_cls, badge_label = _ROUTE_BADGE.get(route_key, ("route-default", route_key or "N/A"))
-
-    st.markdown(f"""
-<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
-    <span class="route-badge {badge_cls}">{badge_label}</span>
-</div>
-""", unsafe_allow_html=True)
-
     st.markdown("### Answer")
 
     all_sources = set()
