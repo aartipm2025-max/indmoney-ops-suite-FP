@@ -15,8 +15,20 @@ def render_tab_d():
 
     from pillars.pillar_c_hitl.approval import get_pending_ops, get_all_ops, approve, reject, REJECT_REASONS
 
-    # Auto-submit booking to queue the moment this tab loads — no button needed.
-    # submitted_bookings tracks which codes have been queued to prevent double-submit.
+    # ── Session-level ops history (survives tab-switches; immune to DB wipes) ──
+    if "ops_history" not in st.session_state:
+        st.session_state["ops_history"] = []
+
+    # Seed session history from DB once per session so pre-existing ops appear
+    if "ops_history_seeded" not in st.session_state:
+        try:
+            for op in get_all_ops():
+                _track_op(op["op_type"], op["status"], op.get("created_at", ""))
+        except Exception:
+            pass
+        st.session_state["ops_history_seeded"] = True
+
+    # ── Auto-submit booking ────────────────────────────────────────────────────
     if "submitted_bookings" not in st.session_state:
         st.session_state["submitted_bookings"] = set()
 
@@ -25,7 +37,6 @@ def render_tab_d():
         bc = st.session_state["booking_context"]
         booking_code = bc.get("booking_code")
 
-        # Guard: skip if booking context is invalid (e.g. voice agent returned error dict)
         if not booking_code or booking_code == "N/A" or "error" in bc:
             st.warning("Booking context is incomplete. Please complete a booking in the Voice Scheduler first.")
         elif booking_code not in st.session_state["submitted_bookings"]:
@@ -34,7 +45,6 @@ def render_tab_d():
             from pillars.pillar_c_hitl.approval import submit_for_approval
             from datetime import timedelta
 
-            # Build briefing — fall back to plain text if card generation fails
             try:
                 pulse = _load_pulse()
                 card  = generate_briefing_card(pulse, bc)
@@ -45,7 +55,7 @@ def render_tab_d():
                 plain = f"Booking {booking_code} — briefing unavailable: {e}"
 
             slot = bc.get("slot", {})
-            slot_date    = slot.get("date") or (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%d")
+            slot_date     = slot.get("date") or (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%d")
             slot_time_str = slot.get("time", "10:00 AM IST").replace(" IST", "").strip()
             try:
                 from datetime import datetime as _dt, timedelta as _td
@@ -179,8 +189,19 @@ def render_tab_d():
                 ):
                     with st.spinner("Executing all actions…"):
                         results = [approve(op["id"]) for op in ops]
+                        now_iso = datetime.now(timezone.utc).isoformat()
                         success_count = sum(1 for r in results if r.get("success"))
                         is_demo = any(r.get("demo") for r in results)
+
+                        # Save every result to session history immediately
+                        for op_item, r in zip(ops, results):
+                            _track_op(
+                                op_item["op_type"],
+                                "executed" if r.get("success") else "failed",
+                                op_item.get("created_at", now_iso),
+                                demo=r.get("demo", False),
+                            )
+
                         if success_count == len(ops):
                             if is_demo:
                                 st.info(
@@ -191,15 +212,14 @@ def render_tab_d():
                             else:
                                 st.success(f"All {len(ops)} actions executed successfully.")
                                 st.balloons()
-                            # Surface useful links
-                            for op, r in zip(ops, results):
+                            for op_item, r in zip(ops, results):
                                 link = r.get("link")
-                                if link and not r.get("demo") and link != "#":
+                                if link and not r.get("demo"):
                                     label_map = {
                                         "calendar_hold": "Open Calendar Event",
                                         "doc_append":    "Open Google Doc",
                                     }
-                                    label = label_map.get(op["op_type"])
+                                    label = label_map.get(op_item["op_type"])
                                     if label:
                                         st.markdown(f"[{label}]({link})")
                         else:
@@ -219,8 +239,11 @@ def render_tab_d():
                         placeholder="Optional explanation…",
                     )
                     if st.button("Confirm Rejection", key=f"reject_confirm_{booking_code}"):
-                        for op in ops:
-                            reject(op["id"], reason, reason_text)
+                        now_iso = datetime.now(timezone.utc).isoformat()
+                        for op_item in ops:
+                            reject(op_item["id"], reason, reason_text)
+                            _track_op(op_item["op_type"], "rejected",
+                                      op_item.get("created_at", now_iso))
                         st.warning(f"Booking {booking_code} rejected.")
                         st.rerun()
 
@@ -235,8 +258,16 @@ def render_tab_d():
     st.markdown("---")
     st.markdown('<div class="section-label">Operation History</div>', unsafe_allow_html=True)
 
-    all_ops = get_all_ops()
-    if all_ops:
+    # Primary source: DB (most accurate).
+    # Fallback: session_state history (survives DB resets within the same session).
+    db_ops = get_all_ops()
+    display_ops = db_ops if db_ops else [
+        {"op_type": h["op_type"], "status": h["status"],
+         "created_at": h["created_at"], "demo": h.get("demo", False)}
+        for h in reversed(st.session_state["ops_history"])
+    ]
+
+    if display_ops:
         _badge_map = {
             "pending":  "status-pending",
             "approved": "status-approved",
@@ -244,29 +275,52 @@ def render_tab_d():
             "failed":   "status-fail",
             "rejected": "status-rejected",
         }
-        st.markdown("""
-<div style="background: #FFFFFF; border-radius: 8px; border: 1px solid #E8EDF3;
-     overflow: hidden; box-shadow: 0 1px 3px rgba(11,31,58,0.04);">
+        src_note = "" if db_ops else (
+            '<div style="font-size:11px;color:#9CA3AF;padding:8px 16px 0;'
+            'font-style:italic;">Showing session history — database was reset by a recent deployment.</div>'
+        )
+        st.markdown(f"""
+<div style="background:#FFFFFF; border-radius:8px; border:1px solid #E8EDF3;
+     overflow:hidden; box-shadow:0 1px 3px rgba(11,31,58,0.04);">
+{src_note}
 """, unsafe_allow_html=True)
-        for i, op in enumerate(all_ops):
+        for i, op in enumerate(display_ops):
             badge_cls = _badge_map.get(op["status"], "status-pending")
-            row_bg = "#FFFFFF" if i % 2 == 0 else "#FAFBFC"
+            row_bg    = "#FFFFFF" if i % 2 == 0 else "#FAFBFC"
+            demo_tag  = ' <span style="font-size:10px;color:#9CA3AF;">(demo)</span>' if op.get("demo") else ""
             st.markdown(f"""
-<div style="display: flex; align-items: center; gap: 14px;
-     padding: 11px 16px; background: {row_bg};
-     border-bottom: 1px solid #F0F3F6; font-size: 13px;">
+<div style="display:flex; align-items:center; gap:14px;
+     padding:11px 16px; background:{row_bg};
+     border-bottom:1px solid #F0F3F6; font-size:13px;">
     <span class="{badge_cls}">{op["status"]}</span>
-    <span style="color: #0B1F3A; font-weight: 500; flex: 1;">{op["op_type"]}</span>
-    <span style="color: #8A9BB0; font-size: 12px; font-family: 'SF Mono', monospace;">
-        {op.get("created_at", "")[:19]}
+    <span style="color:#0B1F3A; font-weight:500; flex:1;">{op["op_type"]}{demo_tag}</span>
+    <span style="color:#8A9BB0; font-size:12px; font-family:'SF Mono',monospace;">
+        {op.get("created_at","")[:19]}
     </span>
 </div>
 """, unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
     else:
         st.markdown("""
-<div style="padding: 24px; color: #8A9BB0; font-size: 13px; text-align: center;
-     background: #FFFFFF; border-radius: 8px; border: 1px solid #E8EDF3;">
+<div style="padding:24px; color:#8A9BB0; font-size:13px; text-align:center;
+     background:#FFFFFF; border-radius:8px; border:1px solid #E8EDF3;">
     No operations recorded yet.
 </div>
 """, unsafe_allow_html=True)
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _track_op(op_type: str, status: str, created_at: str, demo: bool = False):
+    """Upsert an operation into the session-level history list."""
+    if "ops_history" not in st.session_state:
+        st.session_state["ops_history"] = []
+    history = st.session_state["ops_history"]
+    # Update in-place if already tracked, otherwise append
+    for entry in history:
+        if entry.get("op_type") == op_type and entry.get("created_at") == created_at:
+            entry["status"] = status
+            entry["demo"]   = demo
+            return
+    history.append({"op_type": op_type, "status": status,
+                    "created_at": created_at, "demo": demo})
