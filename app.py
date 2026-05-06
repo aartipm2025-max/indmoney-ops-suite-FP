@@ -56,13 +56,13 @@ st.markdown("""
 }
 .brand-title {
     color: #FFFFFF;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
     letter-spacing: 0.01em;
 }
 .brand-sub {
     color: #5B7CFA;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
     letter-spacing: 0.02em;
 }
@@ -86,9 +86,9 @@ section[data-testid="stSidebar"] hr {
 }
 /* Nav radio items */
 section[data-testid="stSidebar"] .stRadio label {
-    color: rgba(255,255,255,0.65) !important;
-    font-size: 13px !important;
-    padding: 7px 4px !important;
+    color: rgba(255,255,255,0.75) !important;
+    font-size: 14px !important;
+    padding: 8px 4px !important;
     cursor: pointer;
     transition: color 0.15s ease;
 }
@@ -114,11 +114,12 @@ section[data-testid="stSidebar"] .stButton > button:not([kind="primary"]):hover 
 }
 
 /* ── Typography ───────────────────────────────────────────────────────────── */
-h1 { color: #0B1F3A; font-weight: 700; font-size: 22px; line-height: 1.3;
-     margin-bottom: 4px; letter-spacing: -0.01em; }
-h2 { color: #0B1F3A; font-weight: 600; font-size: 18px; line-height: 1.4; }
-h3 { color: #0B1F3A; font-weight: 600; font-size: 15px; line-height: 1.4; }
-p, li { color: #2C3E50; font-size: 14px; line-height: 1.6; }
+h1 { color: #0B1F3A; font-weight: 700; font-size: 26px; line-height: 1.25;
+     margin-bottom: 6px; letter-spacing: -0.02em; }
+h2 { color: #0B1F3A; font-weight: 600; font-size: 20px; line-height: 1.35;
+     letter-spacing: -0.01em; }
+h3 { color: #0B1F3A; font-weight: 600; font-size: 17px; line-height: 1.4; }
+p, li { color: #2C3E50; font-size: 15px; line-height: 1.65; }
 
 /* ── Cards ────────────────────────────────────────────────────────────────── */
 .card {
@@ -248,10 +249,10 @@ p, li { color: #2C3E50; font-size: 14px; line-height: 1.6; }
 
 /* ── Section Labels ───────────────────────────────────────────────────────── */
 .section-label {
-    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
-    text-transform: uppercase; color: #8A9BB0;
-    margin: 0 0 16px 0; padding-bottom: 8px;
-    border-bottom: 1px solid #F0F3F6;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.07em;
+    text-transform: uppercase; color: #6B7A8D;
+    margin: 0 0 18px 0; padding-bottom: 10px;
+    border-bottom: 1px solid #E8EDF3;
 }
 
 /* ── Chat Bubbles ─────────────────────────────────────────────────────────── */

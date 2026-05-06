@@ -148,10 +148,10 @@ _CSS = """
 .imc:hover { box-shadow:0 4px 16px rgba(11,31,58,0.10); }
 .imc-icon  { font-size:18px; margin-bottom:10px; opacity:0.7; }
 .imc-val   {
-    font-size:28px; font-weight:700; color:#1B2430;
-    line-height:1; letter-spacing:-0.02em; margin-bottom:4px;
+    font-size:30px; font-weight:700; color:#1B2430;
+    line-height:1; letter-spacing:-0.02em; margin-bottom:6px;
 }
-.imc-label { font-size:11px; color:#6B7280; font-weight:500; }
+.imc-label { font-size:12px; color:#4B5563; font-weight:500; line-height:1.4; }
 
 /* ── Theme intelligence card ─────────────────────────────────────────── */
 .tic {
@@ -168,7 +168,7 @@ _CSS = """
     display:flex; align-items:flex-start; justify-content:space-between;
     margin-bottom:12px;
 }
-.tic-title { font-size:14px; font-weight:700; color:#1B2430; line-height:1.3; }
+.tic-title { font-size:15px; font-weight:700; color:#1B2430; line-height:1.3; }
 .sev-badge {
     display:inline-block; padding:2px 8px; border-radius:4px;
     font-size:10px; font-weight:700; letter-spacing:0.06em;
@@ -187,7 +187,7 @@ _CSS = """
 .trend-flat { background:#F9FAFB; color:#6B7280; border-color:#E5E7EB; }
 
 .tic-insight {
-    font-size:13px; color:#374151; line-height:1.65;
+    font-size:14px; color:#374151; line-height:1.7;
     margin-bottom:12px; padding-bottom:12px;
     border-bottom:1px solid #F3F4F6;
 }
@@ -205,15 +205,15 @@ _CSS = """
 }
 
 .tic-section-label {
-    font-size:10px; font-weight:700; text-transform:uppercase;
-    letter-spacing:0.08em; color:#9CA3AF; margin-bottom:4px;
+    font-size:11px; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.07em; color:#9CA3AF; margin-bottom:5px;
 }
 .tic-impact {
-    font-size:12px; color:#6B7280; line-height:1.55; margin-bottom:12px;
+    font-size:13px; color:#4B5563; line-height:1.6; margin-bottom:12px;
 }
 .tic-action {
-    font-size:12px; color:#0B1F3A; font-weight:600; line-height:1.5;
-    background:#F6F8FB; padding:9px 12px; border-radius:6px;
+    font-size:13px; color:#0B1F3A; font-weight:600; line-height:1.55;
+    background:#F6F8FB; padding:10px 13px; border-radius:6px;
     border-left:3px solid #5B7CFA; margin-bottom:10px;
 }
 .tic-quote {
@@ -231,10 +231,10 @@ _CSS = """
 }
 .corr-icon { font-size:16px; padding-top:1px; flex-shrink:0; opacity:0.6; }
 .corr-label {
-    font-size:10px; font-weight:700; letter-spacing:0.08em;
-    text-transform:uppercase; color:#0B1F3A; margin-bottom:4px;
+    font-size:11px; font-weight:700; letter-spacing:0.07em;
+    text-transform:uppercase; color:#0B1F3A; margin-bottom:5px;
 }
-.corr-text { font-size:13px; color:#374151; line-height:1.65; }
+.corr-text { font-size:14px; color:#374151; line-height:1.7; }
 
 /* ── Recommendation card ─────────────────────────────────────────────── */
 .rec-card {
@@ -242,11 +242,11 @@ _CSS = """
     margin-bottom:16px;
 }
 .rec-eyebrow {
-    font-size:10px; font-weight:700; letter-spacing:0.1em;
-    text-transform:uppercase; color:#5B7CFA; margin-bottom:8px;
+    font-size:11px; font-weight:700; letter-spacing:0.09em;
+    text-transform:uppercase; color:#5B7CFA; margin-bottom:10px;
 }
-.rec-title { font-size:16px; font-weight:700; color:#FFFFFF; margin-bottom:10px; }
-.rec-body  { font-size:13px; color:rgba(255,255,255,0.90); line-height:1.7; }
+.rec-title { font-size:18px; font-weight:700; color:#FFFFFF; margin-bottom:12px; }
+.rec-body  { font-size:14px; color:rgba(255,255,255,0.90); line-height:1.75; }
 .rec-impact-label {
     font-size:10px; font-weight:700; letter-spacing:0.08em;
     text-transform:uppercase; color:rgba(255,255,255,0.60);
