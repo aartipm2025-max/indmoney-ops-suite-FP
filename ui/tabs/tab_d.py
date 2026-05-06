@@ -23,35 +23,42 @@ def render_tab_d():
     if "booking_context" in st.session_state:
         from ui.tabs.tab_b import _load_data as _load_pulse
         bc = st.session_state["booking_context"]
-        pulse = _load_pulse()
-        booking_code = bc.get("booking_code", "N/A")
+        booking_code = bc.get("booking_code")
 
-        if booking_code not in st.session_state["submitted_bookings"]:
+        # Guard: skip if booking context is invalid (e.g. voice agent returned error dict)
+        if not booking_code or booking_code == "N/A" or "error" in bc:
+            st.warning("Booking context is incomplete. Please complete a booking in the Voice Scheduler first.")
+        elif booking_code not in st.session_state["submitted_bookings"]:
             from pillars.pillar_c_hitl.mcp_tools import create_calendar_hold, create_email_draft, create_doc_append
             from pillars.pillar_c_hitl.briefing_card import generate_briefing_card, format_briefing_html, format_briefing_plain
             from pillars.pillar_c_hitl.approval import submit_for_approval
             from datetime import timedelta
 
-            card = generate_briefing_card(pulse, bc)
-            html = format_briefing_html(card)
-            plain = format_briefing_plain(card)
+            # Build briefing — fall back to plain text if card generation fails
+            try:
+                pulse = _load_pulse()
+                card  = generate_briefing_card(pulse, bc)
+                html  = format_briefing_html(card)
+                plain = format_briefing_plain(card)
+            except Exception as e:
+                html  = f"<p>Booking {booking_code} — briefing unavailable: {e}</p>"
+                plain = f"Booking {booking_code} — briefing unavailable: {e}"
 
             slot = bc.get("slot", {})
-            slot_date = slot.get("date") or (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%d")
+            slot_date    = slot.get("date") or (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%d")
             slot_time_str = slot.get("time", "10:00 AM IST").replace(" IST", "").strip()
             try:
                 from datetime import datetime as _dt, timedelta as _td
-                t = _dt.strptime(slot_time_str, "%I:%M %p")
+                t     = _dt.strptime(slot_time_str, "%I:%M %p")
                 start = f"{slot_date}T{t.strftime('%H:%M:%S')}+05:30"
-                end = f"{slot_date}T{(t + _td(minutes=30)).strftime('%H:%M:%S')}+05:30"
+                end   = f"{slot_date}T{(t + _td(minutes=30)).strftime('%H:%M:%S')}+05:30"
             except Exception:
                 start = f"{slot_date}T10:00:00+05:30"
-                end = f"{slot_date}T10:30:00+05:30"
+                end   = f"{slot_date}T10:30:00+05:30"
 
             submit_for_approval(create_calendar_hold(
                 f"Advisor Q&A — {bc.get('topic', 'General')} — {booking_code}",
-                f"Booking: {booking_code}\n{plain}",
-                start, end
+                f"Booking: {booking_code}\n{plain}", start, end
             ), request_id=booking_code)
 
             submit_for_approval(create_email_draft(
@@ -67,7 +74,8 @@ def render_tab_d():
             ), request_id=booking_code)
 
             st.session_state["submitted_bookings"].add(booking_code)
-            st.toast(f"Booking {booking_code} sent to approval queue", icon="✅")
+            st.toast(f"Booking {booking_code} queued for approval", icon="✅")
+            st.rerun()
 
     else:
         st.markdown("""
