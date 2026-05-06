@@ -7,27 +7,25 @@ from core.logger import log
 
 def generate_briefing_card(pulse_data: dict, booking_context: dict) -> dict:
     """Build an advisor briefing card from pulse + booking data."""
-    themes = pulse_data.get("themes", [])[:3]
-    quotes = pulse_data.get("quotes", [])[:3]
-    actions = pulse_data.get("actions", [])[:3]
-    date_range = pulse_data.get("date_range", ["N/A", "N/A"])
-    total_reviews = pulse_data.get("total_reviews", 0)
+    themes       = pulse_data.get("themes", [])[:3]
+    quotes       = pulse_data.get("sample_quotes", [])[:3]
+    total        = pulse_data.get("total", 0)
+    date_to      = pulse_data.get("date_to", "N/A")
 
     trend_summary = []
-    for t in themes[:3]:
-        direction = t.get("trend", {}).get("direction", "flat")
-        arrow = "↑" if direction == "up" else "↓" if direction == "down" else "→"
-        pct = t.get("trend", {}).get("pct_delta", 0)
-        trend_summary.append(f"{arrow} {t['theme']} ({pct:+.0f}%)")
+    for t in themes:
+        delta = t.get("delta", 0)
+        arrow = "up" if delta > 5 else "down" if delta < -5 else "flat"
+        sym   = "+" if delta > 5 else "-" if delta < -5 else "~"
+        trend_summary.append(f"{sym} {t.get('name', '')} ({delta:+.0f}%)")
 
     market_context = {
-        "period": f"{date_range[0]} to {date_range[1]}",
-        "total_reviews": total_reviews,
-        "top_concerns": [t.get("theme", "") for t in themes],
+        "period": f"Week ending {date_to}",
+        "total_reviews": total,
+        "top_concerns": [t.get("name", "") for t in themes],
         "trend_summary": ", ".join(trend_summary),
         "sentiment": "declining" if any(
-            t.get("trend", {}).get("direction") == "up" and t.get("count", 0) > 30
-            for t in themes
+            t.get("delta", 0) > 5 and t.get("count", 0) > 30 for t in themes
         ) else "stable",
     }
 
@@ -37,18 +35,18 @@ def generate_briefing_card(pulse_data: dict, booking_context: dict) -> dict:
         "market_context": market_context,
         "top_themes": [
             {
-                "name": t.get("theme", ""),
+                "name":  t.get("name", ""),
                 "count": t.get("count", 0),
-                "trend": t.get("trend", {}).get("direction", "flat"),
+                "trend": "up" if t.get("delta", 0) > 5 else "down" if t.get("delta", 0) < -5 else "flat",
             }
             for t in themes
         ],
         "sentiment_shift": market_context["sentiment"],
-        "pain_points": [t.get("theme", "") for t in themes[:2]],
+        "pain_points": [t.get("name", "") for t in themes[:2]],
         "talking_points": [
-            f"Users are reporting {themes[0].get('theme', 'issues')}" if themes else "Review general feedback",
-            f"Consider addressing {themes[1].get('theme', 'concerns')}" if len(themes) > 1 else "Check recent app updates",
-            f"Action item: {actions[0]}" if actions else "Review team priorities",
+            f"Users are reporting issues with: {themes[0].get('name', 'general')}." if themes else "Review general feedback.",
+            f"Consider addressing: {themes[1].get('name', 'app concerns')}." if len(themes) > 1 else "Check recent app updates.",
+            f"Recommended action: {themes[0].get('action', 'Investigate root causes')}." if themes else "Review team priorities.",
         ],
         "user_quotes": quotes,
     }
