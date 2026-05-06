@@ -337,6 +337,20 @@ hr { border: none; border-top: 1px solid #E8EDF3; margin: 24px 0; }
 ::-webkit-scrollbar-track { background: #F6F8FB; }
 ::-webkit-scrollbar-thumb { background: #D1D9E0; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #B0BEC5; }
+
+/* ── Page transition fade-in ──────────────────────────────────────────── */
+.main .block-container {
+    animation: pageIn 0.18s ease-out;
+}
+@keyframes pageIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Sidebar text legibility ──────────────────────────────────────────── */
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] span,
+section[data-testid="stSidebar"] div { color: rgba(255,255,255,0.88) !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -354,10 +368,25 @@ if not st.session_state.authenticated:
         padding-left: 12px !important;
         padding-right: 12px !important;
     }
-    /* Compact form inputs */
+    /* Compact form inputs — white text on dark background */
     .stTextInput > div > div > input {
         height: 44px !important;
         font-size: 14px !important;
+        color: #FFFFFF !important;
+        background: rgba(255,255,255,0.08) !important;
+        border: 1.5px solid rgba(255,255,255,0.2) !important;
+        caret-color: #FFFFFF !important;
+    }
+    .stTextInput > div > div > input::placeholder {
+        color: rgba(255,255,255,0.4) !important;
+    }
+    .stTextInput > div > div > input:focus {
+        border-color: #D4A437 !important;
+        box-shadow: 0 0 0 3px rgba(212,164,55,0.15) !important;
+        background: rgba(255,255,255,0.11) !important;
+    }
+    .stTextInput label, .stTextInput label p {
+        color: rgba(255,255,255,0.75) !important;
     }
     .stTextInput { margin-bottom: 12px !important; }
     /* Blue submit button — override global navy rule.
@@ -495,78 +524,72 @@ with st.sidebar:
 def render_home():
     import json
 
-    # Prewarm models once per session — fires silently via @st.cache_resource;
-    # shows spinner on Home (first load) rather than mid-query on Knowledge Base.
-    if not st.session_state.get("_models_prewarmed"):
-        from pillars.pillar_a_knowledge.answerer import prewarm_knowledge_base
-        prewarm_knowledge_base()
-        st.session_state["_models_prewarmed"] = True
+    st.markdown(
+        f'<div style="font-size:12px;color:#8A9BB0;margin-bottom:20px;">'
+        f'{datetime.now().strftime("%A, %d %b %Y")}</div>',
+        unsafe_allow_html=True,
+    )
 
-    st.markdown(f"""
-    <div class="brand-header">
-        <span class="brand-title">Welcome back, {st.session_state.username}</span>
-        <span class="brand-sub">{datetime.now().strftime("%A, %d %b %Y")}</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown('<div class="section-label" style="margin-top: 24px;">Dashboard</div>',
+    st.markdown('<div class="section-label">Dashboard</div>',
                 unsafe_allow_html=True)
 
-    c1, c2, c3 = st.columns(3)
+    # ── Compute card values ───────────────────────────────────────────────────
+    try:
+        from pillars.pillar_c_hitl.approval import get_pending_ops
+        pending_count = len(get_pending_ops())
+    except Exception:
+        pending_count = 0
+    card1_accent = "#D4A437" if pending_count > 0 else "#10B981"
+    card1_note   = "Requires attention" if pending_count > 0 else "All caught up"
 
-    with c1:
+    rag_path    = Path("evals/rag_eval_results.json")
+    safety_path = Path("evals/safety_eval_results.json")
+    if rag_path.exists() and safety_path.exists():
         try:
-            from pillars.pillar_c_hitl.approval import get_pending_ops
-            pending_count = len(get_pending_ops())
+            rag_data    = json.loads(rag_path.read_text())
+            safety_data = json.loads(safety_path.read_text())
+            rag_pct     = (sum(1 for r in rag_data if r["status"] == "pass") / len(rag_data) * 100) if rag_data else 0
+            safety_ok   = all(r["status"] == "pass" for r in safety_data)
+            overall     = "PASS" if rag_pct >= 70 and safety_ok else "REVIEW"
+            card2_accent = "#10B981" if overall == "PASS" else "#D4A437"
+            card2_sub    = f"RAG {rag_pct:.0f}%  ·  Safety {'100%' if safety_ok else 'FAIL'}"
         except Exception:
-            pending_count = 0
-        accent = "#D4A437" if pending_count > 0 else "#10B981"
-        note = "Requires attention" if pending_count > 0 else "All caught up"
-        st.markdown(f"""
-<div class="metric-card" style="border-left-color: {accent};">
-    <div class="eval-label">Pending Approvals</div>
-    <div style="font-size: 34px; font-weight: 700; color: #0B1F3A;
-         line-height: 1; margin-bottom: 6px;">{pending_count}</div>
-    <div style="font-size: 12px; color: #5A6C7D;">{note}</div>
-</div>
-""", unsafe_allow_html=True)
+            overall, card2_accent, card2_sub = "ERROR", "#EF4444", "Could not parse"
+    else:
+        overall, card2_accent, card2_sub = "NOT RUN", "#8A9BB0", "Run evals first"
 
-    with c2:
-        rag_path = Path("evals/rag_eval_results.json")
-        safety_path = Path("evals/safety_eval_results.json")
-        if rag_path.exists() and safety_path.exists():
-            try:
-                rag_data = json.loads(rag_path.read_text())
-                safety_data = json.loads(safety_path.read_text())
-                rag_pct = (
-                    sum(1 for r in rag_data if r["status"] == "pass")
-                    / len(rag_data) * 100
-                ) if rag_data else 0
-                safety_ok = all(r["status"] == "pass" for r in safety_data)
-                overall = "PASS" if rag_pct >= 70 and safety_ok else "REVIEW"
-                accent2 = "#10B981" if overall == "PASS" else "#D4A437"
-                sublabel = f"RAG {rag_pct:.0f}%  ·  Safety {'100%' if safety_ok else 'FAIL'}"
-            except Exception:
-                overall, accent2, sublabel = "ERROR", "#EF4444", "Could not parse results"
-        else:
-            overall, accent2, sublabel = "NOT RUN", "#8A9BB0", "Run evals to see results"
-        st.markdown(f"""
-<div class="metric-card" style="border-left-color: {accent2};">
-    <div class="eval-label">Eval Status</div>
-    <div style="font-size: 22px; font-weight: 700; color: #0B1F3A;
-         line-height: 1; margin-bottom: 6px;">{overall}</div>
-    <div style="font-size: 12px; color: #5A6C7D;">{sublabel}</div>
-</div>
-""", unsafe_allow_html=True)
+    q = st.session_state.get("queries_this_session", 0)
 
-    with c3:
-        q = st.session_state.get("queries_this_session", 0)
-        st.markdown(f"""
-<div class="metric-card" style="border-left-color: #3B82F6;">
-    <div class="eval-label">Session Activity</div>
-    <div style="font-size: 34px; font-weight: 700; color: #0B1F3A;
-         line-height: 1; margin-bottom: 6px;">{q}</div>
-    <div style="font-size: 12px; color: #5A6C7D;">Queries this session</div>
+    # ── Render as compact flex row — width matches "INDmoney Investor Ops" title (~360px) ──
+    st.markdown(f"""
+<div style="display: flex; gap: 10px; max-width: 360px;">
+    <div style="flex: 1; background: #FFFFFF; border-radius: 8px; padding: 14px 12px;
+         border: 1px solid #E8EDF3; border-left: 4px solid {card1_accent};
+         box-shadow: 0 1px 3px rgba(11,31,58,0.06);">
+        <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.07em;
+             text-transform: uppercase; color: #8A9BB0; margin-bottom: 8px;">Approvals</div>
+        <div style="font-size: 26px; font-weight: 700; color: #0B1F3A;
+             line-height: 1; margin-bottom: 4px;">{pending_count}</div>
+        <div style="font-size: 11px; color: #5A6C7D;">{card1_note}</div>
+    </div>
+    <div style="flex: 1; background: #FFFFFF; border-radius: 8px; padding: 14px 12px;
+         border: 1px solid #E8EDF3; border-left: 4px solid {card2_accent};
+         box-shadow: 0 1px 3px rgba(11,31,58,0.06);">
+        <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.07em;
+             text-transform: uppercase; color: #8A9BB0; margin-bottom: 8px;">Evals</div>
+        <div style="font-size: 18px; font-weight: 700; color: #0B1F3A;
+             line-height: 1; margin-bottom: 4px;">{overall}</div>
+        <div style="font-size: 11px; color: #5A6C7D;">{card2_sub}</div>
+    </div>
+    <div style="flex: 1; background: #FFFFFF; border-radius: 8px; padding: 14px 12px;
+         border: 1px solid #E8EDF3; border-left: 4px solid #3B82F6;
+         box-shadow: 0 1px 3px rgba(11,31,58,0.06);">
+        <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.07em;
+             text-transform: uppercase; color: #8A9BB0; margin-bottom: 8px;">Queries</div>
+        <div style="font-size: 26px; font-weight: 700; color: #0B1F3A;
+             line-height: 1; margin-bottom: 4px;">{q}</div>
+        <div style="font-size: 11px; color: #5A6C7D;">This session</div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -626,15 +649,20 @@ def render_home():
 """, unsafe_allow_html=True)
 
 
-# ── Content Routing ───────────────────────────────────────────────────────────
-if page != "Home":
-    st.markdown("""
+# ── Persistent brand header — always shown on every page ─────────────────────
+_welcome = (
+    f"Welcome back, {st.session_state.username}"
+    if page == "Home"
+    else page
+)
+st.markdown(f"""
 <div class="brand-header">
     <span class="brand-title">INDmoney &nbsp;·&nbsp; Investor Ops &amp; Intelligence Suite</span>
-    <span class="brand-sub">Investor Ops Suite</span>
+    <span class="brand-sub">{_welcome}</span>
 </div>
 """, unsafe_allow_html=True)
 
+# ── Content Routing ───────────────────────────────────────────────────────────
 if page == "Home":
     render_home()
 elif page == "Knowledge Base":
