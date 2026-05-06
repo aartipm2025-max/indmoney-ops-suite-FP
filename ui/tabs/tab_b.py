@@ -431,37 +431,15 @@ def render_tab_b():
 
     _render_header(data)
 
-    # Controls row
-    ctrl_l, ctrl_r = st.columns([3, 1])
+    _, ctrl_r = st.columns([5, 1])
     with ctrl_r:
-        show_quotes = st.toggle("Show user quotes", value=False, key="pulse_quotes")
-        if st.button("↺ Refresh data", key="pulse_refresh", use_container_width=True):
+        if st.button("↺ Refresh", key="pulse_refresh", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
-
-    with ctrl_l:
-        neg = data["sb"]["neg"]
-        delta = data["neg_delta"]
-        arrow = "▲" if delta > 0 else "▼"
-        color = "#DC2626" if delta > 0 else "#15803D"
-        st.markdown(f"""
-<div style="background:#FFFFFF; border:1px solid #E7ECF2; border-radius:8px;
-     padding:11px 18px; font-size:12px; color:#6B7280;
-     display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
-  <span>Week&nbsp;B&nbsp;(current):&nbsp;
-    <strong style="color:#1B2430;">{neg}% negative sentiment</strong>
-  </span>
-  <span style="color:{color}; font-weight:600;">
-    {arrow} {abs(delta):.1f} pp vs Week A
-  </span>
-  <span>Week&nbsp;A:&nbsp;<strong style="color:#1B2430;">{data['sa']['neg']}%</strong></span>
-  <span>Android&nbsp;·&nbsp;{data['sb']['total']}&nbsp;reviews this week</span>
-</div>
-""", unsafe_allow_html=True)
 
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
     _render_metrics(data)
-    _render_themes(data, show_quotes)
+    _render_themes(data, show_quotes=True)
     _render_correlation(data)
     _render_recommendation(data)
