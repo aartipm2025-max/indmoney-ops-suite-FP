@@ -55,7 +55,7 @@ MOCK_SLOTS = _future_slots()
 
 
 class VoiceAgent:
-    def __init__(self, top_theme: str = "general"):
+    def __init__(self, top_theme: str = "general", pulse_themes: list = None):
         self.state = VoiceState.GREETING
         self.top_theme = top_theme
         self.topic = None
@@ -64,6 +64,9 @@ class VoiceAgent:
         self.booking_code = None
         self.turn_count = 0
         self.transcript = []
+        # Extended topic list: structured TOPICS + top pulse themes (deduped)
+        extra = [t["name"] for t in (pulse_themes or [])[:3]]
+        self.all_topics = TOPICS + [e for e in extra if e not in TOPICS]
 
     def _gen_booking_code(self) -> str:
         theme_code = "GENR"
@@ -95,10 +98,19 @@ class VoiceAgent:
 
         elif self.state == VoiceState.DISCLAIMER:
             if any(w in user_input.lower() for w in ["yes", "sure", "ok", "continue", "proceed"]):
-                topics_str = "\n".join(f"  {i+1}. {t}" for i, t in enumerate(TOPICS))
+                structured = "\n".join(f"  {i+1}. {t}" for i, t in enumerate(TOPICS))
+                pulse_extra = self.all_topics[len(TOPICS):]
+                pulse_block = ""
+                if pulse_extra:
+                    start = len(TOPICS) + 1
+                    pulse_lines = "\n".join(
+                        f"  {start + i}. {t}  [Trending]"
+                        for i, t in enumerate(pulse_extra)
+                    )
+                    pulse_block = f"\nCurrently trending from Weekly Pulse:\n{pulse_lines}"
                 response = (
                     f"What topic would you like to discuss with an advisor?\n"
-                    f"{topics_str}\n"
+                    f"{structured}{pulse_block}\n"
                     f"Please choose a number or describe your topic."
                 )
                 next_state = VoiceState.TOPIC_SELECT
@@ -112,15 +124,16 @@ class VoiceAgent:
                 response = "I cannot provide investment advice. For guidance, please visit https://www.amfiindia.com/investor/knowledge-center-info. Would you like to book an advisor call instead?"
                 # Stay in TOPIC_SELECT, don't advance
             else:
-                # Try to match topic by number or keyword
+                # Try to match topic by number or keyword against full topic list
                 matched = None
                 try:
                     idx = int(user_input.strip()) - 1
-                    if 0 <= idx < len(TOPICS):
-                        matched = TOPICS[idx]
+                    if 0 <= idx < len(self.all_topics):
+                        matched = self.all_topics[idx]
                 except ValueError:
-                    for t in TOPICS:
-                        if any(word in user_input.lower() for word in t.lower().replace("/", " ").split()):
+                    for t in self.all_topics:
+                        words = t.lower().replace("/", " ").replace("&", " ").split()
+                        if any(word in user_input.lower() for word in words if len(word) > 3):
                             matched = t
                             break
 
@@ -129,7 +142,7 @@ class VoiceAgent:
                     response = f"Got it — {matched}. When would you prefer the call? (e.g., 'tomorrow', 'Monday afternoon')"
                     next_state = VoiceState.TIME_PREFERENCE
                 else:
-                    response = "I didn't catch that. Please choose a number (1-5) or describe your topic."
+                    response = f"I didn't catch that. Please choose a number (1–{len(self.all_topics)}) or describe your topic."
                     # Stay in TOPIC_SELECT
 
         elif self.state == VoiceState.TIME_PREFERENCE:

@@ -118,6 +118,30 @@ _CSS = """
 .vc-step-sub { font-size:10px; color:#9CA3AF; margin-top:1px; }
 
 
+/* Trending intelligence panel */
+.vc-trending {
+    background:#F8FAFC; border:1px solid #E8EDF3;
+    border-radius:8px; padding:12px 16px; margin-bottom:16px;
+}
+.vc-trending-hdr {
+    font-size:10px; font-weight:700; letter-spacing:0.09em;
+    text-transform:uppercase; color:#9CA3AF; margin-bottom:10px;
+}
+.vc-trend-row {
+    display:flex; align-items:center; gap:10px;
+    padding:6px 0; border-bottom:1px solid #F1F5F9;
+}
+.vc-trend-row:last-child { border-bottom:none; }
+.vc-trend-name { font-size:12px; font-weight:600; color:#1B2430; flex:1; }
+.vc-trend-sev {
+    font-size:9px; font-weight:700; letter-spacing:0.05em;
+    text-transform:uppercase; padding:2px 7px; border-radius:3px;
+    white-space:nowrap;
+}
+.vc-sev-critical { background:#FEE2E2; color:#991B1B; }
+.vc-sev-high     { background:#FEF3C7; color:#92400E; }
+.vc-sev-medium   { background:#DBEAFE; color:#1E40AF; }
+
 /* Booking card */
 .vc-booking {
     background:#0B1F3A; border-radius:12px;
@@ -232,11 +256,12 @@ def render_tab_c():
         pulse_label = "Not connected"
         pulse_color = "#9CA3AF"
 
-    # Initialize voice agent (unchanged logic)
+    # Initialize voice agent — pass pulse themes so they appear in topic list
     if "voice_agent" not in st.session_state:
         from pillars.pillar_b_voice.voice_agent import VoiceAgent
         st.session_state["voice_agent"] = VoiceAgent(
-            top_theme=st.session_state.get("voice_top_theme", "general")
+            top_theme=st.session_state.get("voice_top_theme", "general"),
+            pulse_themes=st.session_state.get("themes", []),
         )
         greeting = st.session_state["voice_agent"].process_turn("hello")
         st.session_state.setdefault("voice_history", [])
@@ -303,6 +328,26 @@ def render_tab_c():
             '<div class="section-label" style="margin-bottom:14px;">Conversation</div>',
             unsafe_allow_html=True,
         )
+
+        # Trending This Week — non-clickable intelligence panel
+        pulse_data = st.session_state.get("pulse")
+        if pulse_data and current_state.upper() not in ("BOOKED", "FAILED"):
+            trending = pulse_data.get("themes", [])[:3]
+            if trending:
+                sev_cls = {"CRITICAL": "vc-sev-critical", "HIGH": "vc-sev-high"}
+                rows = ""
+                for t in trending:
+                    cls = sev_cls.get(t.get("severity", "MEDIUM"), "vc-sev-medium")
+                    rows += f"""
+<div class="vc-trend-row">
+  <span class="vc-trend-name">{t['name']}</span>
+  <span class="vc-trend-sev {cls}">{t.get('severity','MEDIUM')}</span>
+</div>"""
+                st.markdown(f"""
+<div class="vc-trending">
+  <div class="vc-trending-hdr">Trending This Week — included in topic selection below</div>
+  {rows}
+</div>""", unsafe_allow_html=True)
 
         # Message history
         for entry in history:
