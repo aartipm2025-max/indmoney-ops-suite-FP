@@ -31,9 +31,10 @@ def retry_on_rate_limit(max_retries=3):
     return decorator
 
 
-@retry_on_rate_limit(max_retries=3)
+@retry_on_rate_limit(max_retries=4)
 def _eval_one(item: dict) -> dict:
-    """Evaluate a single golden question (runs in thread)."""
+    """Evaluate a single golden question."""
+    time.sleep(0.8)   # gentle throttle — avoids Groq rate-limit bursts
     try:
         response = ask(item["question"])
 
@@ -84,7 +85,8 @@ def run_rag_eval() -> list[dict]:
 
     results: list[dict] = []
 
-    with ThreadPoolExecutor(max_workers=2) as pool:  # was 5
+    # Sequential (max_workers=1) — eliminates Groq concurrent rate-limit errors
+    with ThreadPoolExecutor(max_workers=1) as pool:
         future_to_item = {pool.submit(_eval_one, item): item for item in items}
         for future in as_completed(future_to_item):
             result = future.result()
