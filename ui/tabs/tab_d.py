@@ -20,9 +20,10 @@ def render_tab_d():
     if "submitted_bookings" not in st.session_state:
         st.session_state["submitted_bookings"] = set()
 
-    if "booking_context" in st.session_state and "pulse" in st.session_state:
+    if "booking_context" in st.session_state:
+        from ui.tabs.tab_b import _load_data as _load_pulse
         bc = st.session_state["booking_context"]
-        pulse = st.session_state["pulse"]
+        pulse = _load_pulse()
         booking_code = bc.get("booking_code", "N/A")
 
         if booking_code not in st.session_state["submitted_bookings"]:
@@ -68,9 +69,7 @@ def render_tab_d():
             st.session_state["submitted_bookings"].add(booking_code)
             st.toast(f"Booking {booking_code} sent to approval queue", icon="✅")
 
-    elif "booking_context" in st.session_state and "pulse" not in st.session_state:
-        st.warning("Booking found but no pulse data. Generate pulse first in the **Weekly Pulse** tab.")
-    elif "pulse" not in st.session_state and "booking_context" not in st.session_state:
+    else:
         st.markdown("""
 <div style="padding: 12px 16px; background: #F6F8FB; border-radius: 6px;
      border: 1px solid #E8EDF3; font-size: 13px; color: #5A6C7D; margin-bottom: 16px;">
