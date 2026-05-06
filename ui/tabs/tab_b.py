@@ -278,19 +278,11 @@ def _render_header(data: dict) -> None:
     trend_lbl = "Improving" if neg_delta < 0 else "Escalating"
     trend_cls = "pb-stable" if neg_delta < 0 else "pb-warn"
     st.markdown(f"""
-<div style="display:flex; align-items:flex-start; justify-content:space-between;
-     flex-wrap:wrap; gap:12px; margin-bottom:24px;">
-  <div>
-    <h1 style="margin:0 0 4px; font-size:22px;">Weekly Product Pulse</h1>
-    <div style="font-size:13px; color:#6B7280;">
-      AI-generated operational intelligence from user review analysis
-      &nbsp;·&nbsp; as of {data['date_to']}
-    </div>
-  </div>
-  <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px; padding-top:4px;">
-    <span class="pulse-badge {trend_cls}">{trend_lbl} Trend</span>
-    <span class="pulse-badge pb-info">{data['total']} Reviews Analysed</span>
-    <span class="pulse-badge pb-warn">Top Risk: Trading Reliability</span>
+<div style="margin-bottom:24px;">
+  <h1 style="margin:0 0 4px; font-size:22px;">Weekly Product Pulse</h1>
+  <div style="font-size:13px; color:#6B7280;">
+    AI-generated operational intelligence from user review analysis
+    &nbsp;·&nbsp; as of {data['date_to']}
   </div>
 </div>
 """, unsafe_allow_html=True)
