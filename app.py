@@ -463,27 +463,27 @@ if not st.session_state.authenticated:
   </style>
   <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:440px;">
     <div class="fc">
-      <div class="fc-label">01 · Knowledge Base</div>
+      <div class="fc-label">Knowledge Base</div>
       <div class="fc-title">Hybrid RAG Engine</div>
       <div class="fc-desc">BM25 + Vector · Source-cited answers</div>
     </div>
     <div class="fc">
-      <div class="fc-label">02 · Weekly Pulse</div>
+      <div class="fc-label">Weekly Pulse</div>
       <div class="fc-title">AI Sentiment Intelligence</div>
       <div class="fc-desc">Theme extraction · Trend analysis</div>
     </div>
     <div class="fc">
-      <div class="fc-label">03 · Voice Scheduler</div>
+      <div class="fc-label">Voice Scheduler</div>
       <div class="fc-title">FSM Voice Agent</div>
       <div class="fc-desc">Browser TTS · Booking confirmation</div>
     </div>
     <div class="fc">
-      <div class="fc-label">04 · HITL Approval</div>
+      <div class="fc-label">HITL Approval</div>
       <div class="fc-title">Human-in-the-Loop Queue</div>
       <div class="fc-desc">Calendar · Email · Doc operations</div>
     </div>
     <div class="fc" style="grid-column:span 2;">
-      <div class="fc-label">05 · Evaluation</div>
+      <div class="fc-label">Evaluation</div>
       <div class="fc-title">RAG · Safety · End-to-End Evals</div>
       <div class="fc-desc">Automated quality gates · Pass/fail reporting · Compliance checks</div>
     </div>
