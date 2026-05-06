@@ -375,18 +375,17 @@ if not st.session_state.authenticated:
     /* Inputs */
     .stTextInput > div > div > input {
         height: 42px !important; font-size: 13px !important;
-        color: #FFFFFF !important;
-        background: rgba(255,255,255,0.06) !important;
-        border: 1px solid rgba(255,255,255,0.18) !important;
+        color: #000000 !important;
+        background: #FFFFFF !important;
+        border: 1px solid rgba(255,255,255,0.25) !important;
         border-radius: 6px !important;
         caret-color: #5B7CFA !important;
-        transition: border-color 0.15s, background 0.15s !important;
+        transition: border-color 0.15s, box-shadow 0.15s !important;
     }
-    .stTextInput > div > div > input::placeholder { color: rgba(255,255,255,0.35) !important; }
+    .stTextInput > div > div > input::placeholder { color: #9CA3AF !important; }
     .stTextInput > div > div > input:focus {
         border-color: #5B7CFA !important;
-        background: rgba(255,255,255,0.09) !important;
-        box-shadow: 0 0 0 2px rgba(91,124,250,0.15) !important;
+        box-shadow: 0 0 0 2px rgba(91,124,250,0.18) !important;
         outline: none !important;
     }
     .stTextInput label, .stTextInput label p { color: rgba(255,255,255,0.60) !important; font-size: 11px !important; letter-spacing: 0.06em !important; text-transform: uppercase !important; }
