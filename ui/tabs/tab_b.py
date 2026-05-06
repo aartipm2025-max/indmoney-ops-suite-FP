@@ -419,6 +419,8 @@ def render_tab_b():
     st.markdown(_CSS, unsafe_allow_html=True)
 
     data = _load_data()
+    st.session_state["pulse"]  = data
+    st.session_state["themes"] = data["themes"]
 
     _render_header(data)
 

@@ -235,7 +235,7 @@ def render_tab_c():
 
     # Pulse theme detection (unchanged logic)
     if "themes" in st.session_state and st.session_state["themes"]:
-        top_theme = st.session_state["themes"][0].get("theme", "general")
+        top_theme = st.session_state["themes"][0].get("name", "general")
         st.session_state["voice_top_theme"] = top_theme
         pulse_label = top_theme
         pulse_color = "#10B981"
