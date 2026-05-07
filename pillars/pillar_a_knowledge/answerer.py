@@ -85,44 +85,42 @@ SOURCES:
 {formatted_chunks}"""
 
         try:
-            resp = self._client.chat.completions.create(
-                model=_MODEL,
-                temperature=0,
-                max_tokens=400,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": query},
-                ],
-            )
+            for _attempt in range(2):
+                resp = self._client.chat.completions.create(
+                    model=_MODEL,
+                    temperature=0,
+                    max_tokens=500,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": query},
+                    ],
+                )
 
-            answer_text = resp.choices[0].message.content
+                answer_text = resp.choices[0].message.content or ""
+                bullet_lines = [
+                    line.strip().lstrip("•-* ")
+                    for line in answer_text.strip().splitlines()
+                    if line.strip()
+                ]
+                bullets = [{"text": line, "sources": []} for line in bullet_lines if line]
 
-            if not answer_text:
-                answer_text = "No answer found in knowledge base."
+                # Retry once if no citations found
+                if bullets and any("[source:" in b["text"] for b in bullets):
+                    break
+                if _attempt == 0:
+                    log.warning("answerer: no citations on attempt 1, retrying for query='{}'", query[:60])
 
-            bullet_lines = [
-                line.strip().lstrip("•-* ")
-                for line in answer_text.strip().splitlines()
-                if line.strip()
-            ]
-            bullets = [{"text": line, "sources": []} for line in bullet_lines if line]
-
-            # Output validation — must have at least one bullet
             if not bullets:
                 return {
                     "refused": False,
                     "error": True,
-                    "message": "Answer generation failed validation — no bullets produced",
+                    "message": "Answer generation failed — no bullets produced",
                     "query": query,
                     "route": route,
                     "bullets": [],
                     "model_name": _MODEL,
                     "request_id": request_id,
                 }
-
-            # Warn if no bullets contain source citations (don't hard-error — let judge score it)
-            if not any("[source:" in b["text"] for b in bullets):
-                log.warning("answerer: no [source:] tags in response for query='{}'", query[:60])
 
             return {
                 "refused": False,

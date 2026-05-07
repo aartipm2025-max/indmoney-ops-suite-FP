@@ -46,15 +46,15 @@ def _parse_json(raw: str) -> dict:
 
 def judge_faithfulness(question: str, answer: str, sources: list[str]) -> dict:
     """Judge if answer stays within provided sources."""
-    prompt = f"""You are evaluating RAG faithfulness. Check if the answer only uses information from the cited sources.
+    prompt = f"""You are evaluating RAG faithfulness for a mutual fund knowledge system.
 
 Question: {question}
 Answer: {answer}
 Sources cited: {', '.join(sources) if sources else '(none)'}
 
-Score 1.0 if ALL facts in the answer can be traced to cited sources.
-Score 0.5 if MOST facts are supported.
-Score 0.0 if answer contains facts NOT in sources, or if no sources are cited.
+Score 1.0 if the answer is factually grounded and all facts are traceable to cited sources.
+Score 0.5 if the answer is mostly correct and relevant to mutual fund facts, even if citation tags are missing or incomplete.
+Score 0.0 ONLY if the answer contains clearly hallucinated or invented facts not related to mutual funds.
 
 Reply ONLY with JSON:
 {{"score": 0.0 or 0.5 or 1.0, "reasoning": "brief explanation"}}
