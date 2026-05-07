@@ -1,14 +1,13 @@
-﻿{
+{
   "rag_eval": [
-    {"id": "Q001", "question": "What is the exit load for SBI Bluechip Fund?", "type": "fact_only", "expected_sources": ["sbi_bluechip_exit_load"], "expected_answer_contains": ["0.25%", "30 days"]},
-    {"id": "Q002", "question": "What is the exit load for the ELSS fund and why is there no exit load?", "type": "combined", "expected_sources": ["sbi_long_term_equity_exit_load"], "expected_answer_contains": ["NIL", "3-year", "lock-in"]},
-    {"id": "Q003", "question": "What is the expense ratio of SBI Small Cap Fund?", "type": "fact_only", "expected_sources": ["sbi_small_cap_expense_ratio"], "expected_answer_contains": ["Regular", "Direct"]},
-    {"id": "Q004", "question": "What is the minimum SIP for SBI ELSS Tax Saver Fund?", "type": "fact_only", "expected_sources": ["sbi_long_term_equity_minimum_investment"], "expected_answer_contains": ["500"]},
-    {"id": "Q005", "question": "What is exit load and how is it calculated?", "type": "fee_only", "expected_sources": ["elss_exit_load_how_it_s_calculated"], "expected_answer_contains": ["percentage", "NAV"]},
-    {"id": "Q006", "question": "What is the benchmark for SBI Large Cap Fund?", "type": "fact_only", "expected_sources": ["sbi_bluechip_key_facts"], "expected_answer_contains": ["Nifty", "BSE"]},
-    {"id": "Q007", "question": "How does exit load work and what is the exit load for SBI Midcap Fund?", "type": "combined", "expected_sources": ["sbi_midcap_exit_load"], "expected_answer_contains": ["0.25%", "calculated"]},
-    {"id": "Q008", "question": "What is the taxation on ELSS fund redemptions?", "type": "fact_only", "expected_sources": ["sbi_long_term_equity_taxation"], "expected_answer_contains": ["LTCG", "tax"]},
-    {"id": "Q009", "question": "What edge cases exist with exit loads?", "type": "fee_only", "expected_sources": ["elss_exit_load_edge_cases"], "expected_answer_contains": ["edge", "lock-in"]},
-    {"id": "Q010", "question": "Compare the expense ratios of SBI Bluechip and SBI Small Cap Funds.", "type": "fact_only", "expected_sources": ["sbi_bluechip_expense_ratio", "sbi_small_cap_expense_ratio"], "expected_answer_contains": ["expense ratio"]}
+    {"id": "Q001", "question": "What is the exit load for SBI Bluechip Fund and how is this exit load calculated on redemption?", "type": "both", "expected_sources": ["sbi_bluechip_exit_load", "elss_exit_load_how_it_s_calculated"], "expected_answer_contains": ["0.25%", "30 days", "NAV", "calculated"]},
+
+    {"id": "Q002", "question": "Why does the SBI ELSS Tax Saver Fund have no exit load despite other SBI funds charging exit loads?", "type": "both", "expected_sources": ["sbi_long_term_equity_exit_load", "elss_exit_load_edge_cases"], "expected_answer_contains": ["NIL", "3-year", "lock-in", "prevents"]},
+
+    {"id": "Q003", "question": "Compare the exit load structures of SBI Bluechip Fund and SBI Midcap Fund and explain when each is charged.", "type": "both", "expected_sources": ["sbi_bluechip_exit_load", "sbi_midcap_exit_load", "elss_exit_load_how_it_s_calculated"], "expected_answer_contains": ["0.25%", "30 days", "calculated"]},
+
+    {"id": "Q004", "question": "What is the expense ratio difference between Regular and Direct plans for SBI Small Cap Fund and why does this difference exist?", "type": "both", "expected_sources": ["sbi_small_cap_expense_ratio"], "expected_answer_contains": ["Regular", "Direct", "distributor"]},
+
+    {"id": "Q005", "question": "If I invest in SBI Equity Hybrid Fund and redeem after 6 months, what exit load will I pay and how is it applied?", "type": "both", "expected_sources": ["sbi_equity_hybrid_exit_load", "elss_exit_load_how_it_s_calculated"], "expected_answer_contains": ["12 months", "Nil", "NAV"]}
   ]
 }
