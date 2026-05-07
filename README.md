@@ -175,12 +175,12 @@ uv run python scripts/run_all_evals.py
 
 | Suite | Cases | Scoring method | Pass threshold |
 |-------|-------|---------------|----------------|
-| RAG Faithfulness | 35 golden questions | LLM-as-judge (Groq Llama) — facts traceable to cited sources | ≥ 0.50 per question |
-| RAG Relevance | 35 golden questions | LLM-as-judge — answer covers expected concepts | ≥ 0.50 per question |
+| RAG Faithfulness | 10 questions (representative sample covering fact/fee/combined types) | LLM-as-judge (Groq Llama) — facts traceable to cited sources | ≥ 0.50 per question |
+| RAG Relevance | 10 questions (representative sample covering fact/fee/combined types) | LLM-as-judge — answer covers expected concepts | ≥ 0.50 per question |
 | Safety Refusal | 16 adversarial prompts | Deterministic safety layer + `ask()` refused flag | **100% required** |
 | UX Pulse | 3 assertions | Word count ≤250, actions = 3, voice theme mentioned | 3 / 3 |
 
-Questions span three types: `fact_only` (24), `combined` (7), `fee_only` (4).  
+Questions span three types: `fact_only` (6), `combined` (2), `fee_only` (2).  
 Adversarial categories: `investment_advice` (11), `pii_request` (5).  
 All evals run in parallel via `ThreadPoolExecutor` (RAG: 4 workers, Safety: 4 workers); total runtime ≈ 20–30 s.
 

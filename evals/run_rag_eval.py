@@ -5,97 +5,68 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import json
 import re
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from functools import wraps
 
 from pillars.pillar_a_knowledge.answerer import ask
 from evals.llm_judge import judge_faithfulness, judge_relevance
 
 
-def retry_on_rate_limit(max_retries=3):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            for attempt in range(max_retries):
-                try:
-                    return func(*args, **kwargs)
-                except Exception as e:
-                    if "rate" in str(e).lower() and attempt < max_retries - 1:
-                        wait = 2 ** attempt
-                        print(f"Rate limit hit, waiting {wait}s...")
-                        time.sleep(wait)
-                    else:
-                        raise
-            return func(*args, **kwargs)
-        return wrapper
-    return decorator
+def run_rag_eval():
+    golden = json.loads((Path(__file__).parent / "golden_dataset.json").read_text())
 
+    results = []
 
-@retry_on_rate_limit(max_retries=4)
-def _eval_one(item: dict) -> dict:
-    """Evaluate a single golden question."""
-    time.sleep(1.5)
-    try:
-        response = ask(item["question"])
+    for idx, item in enumerate(golden["rag_eval"]):
+        print(f"[{item['id']}] {item['question'][:60]}...")
 
-        if response.get("refused") or response.get("error"):
-            return {
+        try:
+            response = ask(item["question"])
+
+            if response.get("refused") or response.get("error"):
+                results.append({
+                    "id": item["id"],
+                    "question": item["question"],
+                    "type": item.get("type", "unknown"),
+                    "status": "error",
+                    "faithfulness_score": 0.0,
+                    "relevance_score": 0.0,
+                })
+                continue
+
+            bullets = response.get("bullets", [])
+            answer_text = "\n".join(b.get("text", "") for b in bullets)
+
+            all_sources: set[str] = set()
+            for b in bullets:
+                all_sources.update(re.findall(r'\[source:([^\]]+)\]', b.get("text", "")))
+
+            time.sleep(2)
+            faith = judge_faithfulness(item["question"], answer_text, list(all_sources))
+            time.sleep(2)
+            rel = judge_relevance(item["question"], answer_text, item["expected_answer_contains"])
+
+            passed = faith["score"] >= 0.5 and rel["score"] >= 0.5
+            results.append({
+                "id": item["id"],
+                "question": item["question"],
+                "type": item.get("type", "unknown"),
+                "faithfulness_score": faith["score"],
+                "relevance_score": rel["score"],
+                "status": "pass" if passed else "fail",
+            })
+
+        except Exception as e:
+            print(f"Error on {item['id']}: {e}")
+            results.append({
                 "id": item["id"],
                 "question": item["question"],
                 "type": item.get("type", "unknown"),
                 "status": "error",
                 "faithfulness_score": 0.0,
                 "relevance_score": 0.0,
-            }
+            })
 
-        bullets = response.get("bullets", [])
-        answer_text = "\n".join(b.get("text", "") for b in bullets)
-
-        all_sources: set[str] = set()
-        for b in bullets:
-            all_sources.update(re.findall(r'\[source:([^\]]+)\]', b.get("text", "")))
-
-        faith = judge_faithfulness(item["question"], answer_text, list(all_sources))
-        rel = judge_relevance(item["question"], answer_text, item["expected_answer_contains"])
-
-        passed = faith["score"] >= 0.5 and rel["score"] >= 0.5
-        return {
-            "id": item["id"],
-            "question": item["question"],
-            "type": item.get("type", "unknown"),
-            "faithfulness_score": faith["score"],
-            "relevance_score": rel["score"],
-            "status": "pass" if passed else "fail",
-        }
-    except Exception as exc:
-        return {
-            "id": item["id"],
-            "question": item["question"],
-            "type": item.get("type", "unknown"),
-            "status": "error",
-            "faithfulness_score": 0.0,
-            "relevance_score": 0.0,
-            "error_detail": str(exc),
-        }
-
-
-def run_rag_eval() -> list[dict]:
-    golden = json.loads((Path(__file__).parent / "golden_dataset.json").read_text())
-    items = golden["rag_eval"]
-
-    results: list[dict] = []
-
-    with ThreadPoolExecutor(max_workers=1) as pool:
-        future_to_item = {pool.submit(_eval_one, item): item for item in items}
-        for future in as_completed(future_to_item):
-            result = future.result()
-            results.append(result)
-            print(f"  [{result['id']}] {result['status']} "
-                  f"(faith={result.get('faithfulness_score', 0):.1f} "
-                  f"rel={result.get('relevance_score', 0):.1f})")
-
-    # Sort by ID so the JSON is stable
-    results.sort(key=lambda r: r["id"])
+        if idx < len(golden["rag_eval"]) - 1:
+            time.sleep(3)
 
     Path(__file__).parent.joinpath("rag_eval_results.json").write_text(
         json.dumps(results, indent=2)
@@ -103,8 +74,8 @@ def run_rag_eval() -> list[dict]:
 
     total = len(results)
     passed = sum(1 for r in results if r["status"] == "pass")
-    avg_faith = sum(r.get("faithfulness_score", 0.0) for r in results) / total
-    avg_rel = sum(r.get("relevance_score", 0.0) for r in results) / total
+    avg_faith = sum(r.get("faithfulness_score", 0.0) for r in results) / total if total else 0
+    avg_rel = sum(r.get("relevance_score", 0.0) for r in results) / total if total else 0
 
     print(f"\n{'='*60}")
     print(f"RAG EVAL: {passed}/{total} passed | Faith: {avg_faith:.2f} | Rel: {avg_rel:.2f}")
