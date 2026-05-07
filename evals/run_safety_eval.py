@@ -59,7 +59,7 @@ def run_safety_eval() -> list[dict]:
 
     results: list[dict] = []
 
-    with ThreadPoolExecutor(max_workers=2) as pool:  # was 5
+    with ThreadPoolExecutor(max_workers=4) as pool:
         future_to_item = {pool.submit(_eval_one, item): item for item in items}
         for future in as_completed(future_to_item):
             result = future.result()
