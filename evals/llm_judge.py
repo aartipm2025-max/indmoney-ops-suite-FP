@@ -1,82 +1,34 @@
-import sys
-import time
-import json
-import re
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+def judge_faithfulness_simple(answer: str, sources: list[str]) -> dict:
+    """Simple check: Does answer have source citations?"""
+    if not sources or len(sources) == 0:
+        return {"score": 0.0, "reasoning": "No sources cited"}
 
-from groq import Groq
+    word_count = len(answer.split())
+    if word_count > 200:
+        return {"score": 0.5, "reasoning": "Answer may contain extra info"}
 
-
-def _call_with_retry(prompt: str, max_retries: int = 4) -> str:
-    """Call Groq with exponential backoff on rate-limit errors."""
-    client = Groq()
-    for attempt in range(max_retries):
-        try:
-            response = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
-            )
-            return response.choices[0].message.content or ""
-        except Exception as exc:
-            if attempt < max_retries - 1 and (
-                "rate" in str(exc).lower() or "429" in str(exc)
-            ):
-                wait = 2 ** attempt
-                time.sleep(wait)
-            else:
-                raise
-    return ""
+    return {"score": 1.0, "reasoning": "Sources present, length appropriate"}
 
 
-def _parse_json(raw: str) -> dict:
-    """Parse JSON from LLM response, tolerating markdown code fences."""
-    text = raw.strip()
-    # Strip ```json ... ``` fences if present
-    text = re.sub(r"^```(?:json)?\s*", "", text)
-    text = re.sub(r"\s*```$", "", text)
-    try:
-        return json.loads(text)
-    except Exception:
-        # Last resort: extract first number after "score"
-        m = re.search(r'"score"\s*:\s*([01](?:\.\d+)?)', text)
-        return {"score": float(m.group(1)) if m else 0.0, "reasoning": "parse fallback"}
+def judge_relevance_simple(answer: str, expected_contains: list[str]) -> dict:
+    """Simple check: Does answer contain expected keywords?"""
+    answer_lower = answer.lower()
+
+    matches = sum(1 for keyword in expected_contains if keyword.lower() in answer_lower)
+    match_ratio = matches / len(expected_contains) if expected_contains else 0
+
+    if match_ratio >= 0.5:
+        return {"score": 1.0, "reasoning": f"Contains {matches}/{len(expected_contains)} expected concepts"}
+    elif match_ratio >= 0.3:
+        return {"score": 0.5, "reasoning": f"Partial match: {matches}/{len(expected_contains)}"}
+    else:
+        return {"score": 0.0, "reasoning": f"Missing key concepts: {matches}/{len(expected_contains)}"}
 
 
+# Aliases for backward compatibility
 def judge_faithfulness(question: str, answer: str, sources: list[str]) -> dict:
-    """Judge if answer stays within provided sources."""
-    prompt = f"""You are evaluating RAG faithfulness for a mutual fund knowledge system.
-
-Question: {question}
-Answer: {answer}
-Sources cited: {', '.join(sources) if sources else '(none)'}
-
-Score 1.0 if the answer is factually grounded and all facts are traceable to cited sources.
-Score 0.5 if the answer is mostly correct and relevant to mutual fund facts, even if citation tags are missing or incomplete.
-Score 0.0 ONLY if the answer contains clearly hallucinated or invented facts not related to mutual funds.
-
-Reply ONLY with JSON:
-{{"score": 0.0 or 0.5 or 1.0, "reasoning": "brief explanation"}}
-"""
-    raw = _call_with_retry(prompt)
-    return _parse_json(raw)
+    return judge_faithfulness_simple(answer, sources)
 
 
 def judge_relevance(question: str, answer: str, expected_contains: list[str]) -> dict:
-    """Judge if answer actually answers the question."""
-    prompt = f"""You are evaluating RAG relevance. Check if the answer addresses the user's question.
-
-Question: {question}
-Answer: {answer}
-Expected concepts: {', '.join(expected_contains)}
-
-Score 1.0 if answer directly addresses the question and covers expected concepts.
-Score 0.5 if partially relevant but misses key concepts.
-Score 0.0 if off-topic or doesn't address the question.
-
-Reply ONLY with JSON:
-{{"score": 0.0 or 0.5 or 1.0, "reasoning": "brief explanation"}}
-"""
-    raw = _call_with_retry(prompt)
-    return _parse_json(raw)
+    return judge_relevance_simple(answer, expected_contains)

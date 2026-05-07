@@ -39,9 +39,7 @@ def run_rag_eval():
             for b in bullets:
                 all_sources.update(re.findall(r'\[source:([^\]]+)\]', b.get("text", "")))
 
-            time.sleep(2)
             faith = judge_faithfulness(item["question"], answer_text, list(all_sources))
-            time.sleep(2)
             rel = judge_relevance(item["question"], answer_text, item["expected_answer_contains"])
 
             passed = faith["score"] >= 0.5 and rel["score"] >= 0.5
