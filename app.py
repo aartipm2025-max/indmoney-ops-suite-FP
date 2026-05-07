@@ -778,18 +778,6 @@ def render_home():
 
 
 
-# ── Persistent brand header — always shown on every page ─────────────────────
-_welcome = (
-    f"Welcome back, {st.session_state.username}"
-    if page == "Home"
-    else page
-)
-st.markdown(f"""
-<div class="brand-header">
-    <span class="brand-title">INDmoney &nbsp;·&nbsp; Investor Ops &amp; Intelligence Suite</span>
-    <span class="brand-sub">{_welcome}</span>
-</div>
-""", unsafe_allow_html=True)
 
 # ── Content Routing ───────────────────────────────────────────────────────────
 if page == "Home":
