@@ -202,6 +202,7 @@ All fund data is sourced from official public AMC and regulatory pages. No data 
 | Income Tax India (`incometaxindia.gov.in`) | Section 80C, Capital Gains |
 | CAMS (`camsonline.com`) | Investor services reference |
 | INDmoney Play Store (`play.google.com/store/apps/details?id=in.indwealth`) | User reviews corpus |
+| INDmoney Help (`indmoney.com/help/mutual-funds/what-is-exit-load`) | Exit load definition reference |
 
 ---
 
