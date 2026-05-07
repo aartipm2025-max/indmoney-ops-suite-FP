@@ -50,8 +50,6 @@ st.markdown("""
 [data-testid="stSidebarCollapseButton"],
 [data-testid="collapsedControl"] {
     z-index: 1000001 !important;
-    position: fixed !important;
-    top: 14px !important;
 }
 .main .block-container {
     padding-top: calc(56px + 1.5rem) !important;
