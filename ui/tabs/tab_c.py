@@ -474,7 +474,6 @@ def render_tab_c():
     if "booking_context" in st.session_state:
         bc = st.session_state["booking_context"]
         slot = bc.get("slot", {})
-        user_email = st.session_state.get("email", "")
 
         st.markdown(f"""
 <div class="vc-booking">
@@ -490,13 +489,21 @@ def render_tab_c():
       <div class="vc-booking-fv">{slot.get("date", "N/A")}</div>
     </div>
   </div>
-  <div class="vc-booking-email">Confirmation for <strong>{user_email}</strong></div>
 </div>
 """, unsafe_allow_html=True)
 
-        st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+        confirm_email = st.text_input(
+            "Send confirmation to",
+            placeholder="Enter email address for this booking",
+            key="booking_confirm_email",
+        )
+        st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
         if st.button("Complete Booking", type="primary", use_container_width=True):
-            st.session_state["booking_context"]["user_email"] = user_email
-            st.success(f"Booking confirmed for {user_email}")
-            st.info("Go to the **Action Approval** tab to submit this booking to the advisor.")
-            st.balloons()
+            if not confirm_email.strip():
+                st.warning("Please enter an email address to complete the booking.")
+            else:
+                st.session_state["booking_context"]["user_email"] = confirm_email.strip()
+                st.success(f"Booking confirmed — confirmation sent to **{confirm_email.strip()}**")
+                st.info("Go to the **Action Approval** tab to submit this booking to the advisor.")
+                st.balloons()
