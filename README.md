@@ -192,17 +192,90 @@ uv run python scripts/run_all_evals.py   # populate evals/EVALS.md
 
 ## Data Sources
 
-All fund data is sourced from official public AMC and regulatory pages. No data is synthesised or fabricated. See [`docs/SOURCES.md`](docs/SOURCES.md) for the complete verified URL list.
+All fund data is sourced from official public AMC and regulatory pages. No data is synthesised or fabricated. Status last verified 2026-04-24. Two known broken links noted below.
 
-| Source | Category |
-|--------|---------|
-| SBI Asset Management Company (`sbimf.com`) | Fund factsheets, key facts, exit loads, SID/KIM |
-| SEBI (`sebi.gov.in`) | MF Regulations 1996, Riskometer Circular |
-| AMFI (`amfiindia.com`) | Investor awareness, KYC, SIP guidance |
-| Income Tax India (`incometaxindia.gov.in`) | Section 80C, Capital Gains |
-| CAMS (`camsonline.com`) | Investor services reference |
-| INDmoney Play Store (`play.google.com/store/apps/details?id=in.indwealth`) | User reviews corpus |
-| INDmoney Help (`indmoney.com/help/mutual-funds/what-is-exit-load`) | Exit load definition reference |
+### SBI Asset Management Company — Fund Scheme Pages
+
+| # | Title | URL | Status |
+|---|-------|-----|--------|
+| 1 | SBI Large Cap Fund (formerly SBI Bluechip Fund) | https://www.sbimf.com/sbimf-scheme-details/sbi-large-cap-fund-(formerly-known-as-sbi-bluechip-fund)-43 | ✅ OK |
+| 2 | SBI Small Cap Fund | https://www.sbimf.com/sbimf-scheme-details/sbi-small-cap-fund-329 | ✅ OK |
+| 3 | SBI Equity Hybrid Fund | https://www.sbimf.com/sbimf-scheme-details/sbi-equity-hybrid-fund-5 | ✅ OK |
+| 4 | SBI Midcap Fund | https://www.sbimf.com/sbimf-scheme-details/sbi-midcap-fund-34 | ✅ OK |
+| 5 | SBI ELSS Tax Saver Fund (formerly SBI Long Term Equity Fund) | https://www.sbimf.com/sbimf-scheme-details/sbi-elss-tax-saver-fund-(formerly-known-as-sbi-long-term-equity-fund)-3 | ✅ OK |
+| 6 | SBI MF Homepage | https://www.sbimf.com | ✅ OK |
+| 7 | SBI MF FAQ | https://www.sbimf.com/faq | ✅ OK |
+| 8 | SBI MF — Scheme Information Documents (SID) & KIM | https://www.sbimf.com/offer-document-sid-kim | ✅ OK |
+
+### SEBI — Regulatory Documents
+
+| # | Title | URL | Status |
+|---|-------|-----|--------|
+| 9 | SEBI Mutual Fund Regulations 1996 (last amended Sep 2019) | https://www.sebi.gov.in/legal/regulations/sep-2019/securities-and-exchange-board-of-india-mutual-funds-regulations-1996-last-amended-on-september-23-2019-_41350.html | ✅ OK |
+| 10 | SEBI Riskometer Circular (SEBI/IMD/CIR No.9) | https://www.sebi.gov.in/sebi_data/attachdocs/1337083696184.pdf | ✅ OK |
+| 11 | SEBI Investor Education — Exit Load | https://investor.sebi.gov.in/knowledge-centre/exit-load.html | ⚠️ 404 (page moved) |
+
+### AMFI — Investor Education & KYC
+
+| # | Title | URL | Status |
+|---|-------|-----|--------|
+| 12 | AMFI Investor Awareness Program | https://www.amfiindia.com/investor/investor-awareness-program | ✅ OK |
+| 13 | AMFI — Introduction to Mutual Funds | https://www.amfiindia.com/investor/knowledge-center-info?zoneName=IntroductionMutualFunds | ✅ OK |
+| 14 | AMFI — SIP Guidance | https://www.amfiindia.com/investor/become-mf-distributor?zoneName=sip | ✅ OK |
+| 15 | AMFI — KYC Requirements | https://www.amfiindia.com/kyc | ✅ OK |
+
+### Income Tax India
+
+| # | Title | URL | Status |
+|---|-------|-----|--------|
+| 16 | Income Tax — Section 80C (ELSS deduction) | https://www.incometaxindia.gov.in/section-80-c | ✅ OK |
+| 17 | Income Tax — Capital Gains on Mutual Funds | https://www.incometaxindia.gov.in/sale-of-shares | ✅ OK |
+
+### CAMS — Registrar & Transfer Agent
+
+| # | Title | URL | Status |
+|---|-------|-----|--------|
+| 18 | CAMS Investor Services | https://www.camsonline.com/Investors | ✅ OK |
+
+### Review & Reference Data
+
+| # | Title | URL | Status |
+|---|-------|-----|--------|
+| 19 | INDmoney App — Google Play Store | https://play.google.com/store/apps/details?id=in.indwealth | ✅ OK |
+| 20 | INDmoney Help — Exit Load Definition | https://www.indmoney.com/help/mutual-funds/what-is-exit-load | ⚠️ 403 (auth required) |
+
+### API & Model Documentation
+
+| # | Title | URL |
+|---|-------|-----|
+| 21 | Groq API Documentation | https://console.groq.com/docs/overview |
+| 22 | Groq — llama-3.3-70b-versatile model card | https://console.groq.com/docs/models |
+| 23 | Google Gemini API Reference | https://ai.google.dev/api/rest |
+| 24 | Google Calendar API | https://developers.google.com/calendar/api/v3/reference |
+| 25 | Gmail API | https://developers.google.com/gmail/api/reference/rest |
+| 26 | Google Docs API | https://developers.google.com/docs/api/reference/rest |
+
+### Model Repositories (HuggingFace)
+
+| # | Model | URL |
+|---|-------|-----|
+| 27 | BAAI/bge-small-en-v1.5 (embeddings) | https://huggingface.co/BAAI/bge-small-en-v1.5 |
+| 28 | cross-encoder/ms-marco-MiniLM-L-6-v2 (reranker) | https://huggingface.co/cross-encoder/ms-marco-MiniLM-L-6-v2 |
+
+### Key Libraries & Frameworks
+
+| # | Library | URL |
+|---|---------|-----|
+| 29 | ChromaDB | https://docs.trychroma.com |
+| 30 | bm25s | https://github.com/xhluca/bm25s |
+| 31 | Sentence Transformers | https://www.sbert.net |
+| 32 | Instructor (structured LLM output) | https://python.useinstructor.com |
+| 33 | Streamlit | https://docs.streamlit.io |
+| 34 | Pydantic v2 | https://docs.pydantic.dev/latest |
+| 35 | Loguru | https://loguru.readthedocs.io |
+| 36 | Tenacity | https://tenacity.readthedocs.io |
+| 37 | google-play-scraper | https://github.com/JoMingyu/google-play-scraper |
+| 38 | docling (PDF parsing) | https://github.com/DS4SD/docling |
 
 ---
 
