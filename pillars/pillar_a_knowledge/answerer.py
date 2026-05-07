@@ -20,7 +20,7 @@ def get_cached_retriever():
     return HybridRetriever(Path("data/chroma_db"), Path("data/bm25_index"))
 
 
-_MODEL = "llama-3.3-70b-versatile"  # 70B: far better citation compliance than 8B
+_MODEL = "llama-3.1-8b-instant"  # switched: 70b daily TPD exhausted; 8b has separate limit
 _RETRIEVE_TOP_K = 5                 # retrieve top 5
 _ANSWER_TOP_K = 5                   # pass all 5 to LLM (needed for multi-source questions)
 
