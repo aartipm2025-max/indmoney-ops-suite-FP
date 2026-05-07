@@ -42,34 +42,16 @@ st.markdown("""
     max-width: 1400px;
 }
 
-/* ── Brand Header — fixed full-width enterprise nav ───────────────────────── */
-[data-testid="stHeader"] { background: transparent !important; border: none !important; }
-[data-testid="stDecoration"] { display: none !important; }
-[data-testid="stToolbar"] { visibility: hidden !important; }
-[data-testid="stSidebarCollapsedControl"],
-[data-testid="stSidebarCollapseButton"],
-[data-testid="collapsedControl"] {
-    z-index: 1000001 !important;
-}
-.main .block-container {
-    padding-top: calc(56px + 1.5rem) !important;
-}
-section[data-testid="stSidebar"] > div:first-child {
-    padding-top: 56px !important;
-}
+/* ── Brand Header ─────────────────────────────────────────────────────────── */
 .brand-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 999999;
     background: #0B1F3A;
     padding: 0 28px;
     height: 56px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-radius: 0;
+    border-radius: 8px;
+    margin-bottom: 8px;
     box-shadow: 0 2px 12px rgba(11,31,58,0.2);
 }
 .brand-title {
