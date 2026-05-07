@@ -43,7 +43,9 @@ st.markdown("""
 }
 
 /* ── Brand Header — fixed full-width enterprise nav ───────────────────────── */
-[data-testid="stHeader"] { display: none !important; }
+[data-testid="stHeader"] { background: transparent !important; border: none !important; }
+[data-testid="stDecoration"] { display: none !important; }
+[data-testid="stToolbar"] { visibility: hidden !important; }
 .main .block-container {
     padding-top: calc(56px + 1.5rem) !important;
 }
