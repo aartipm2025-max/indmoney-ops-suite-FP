@@ -66,7 +66,7 @@
 - **Theme extraction**: LLM map-reduce over batches of 100 reviews (fast tier: `llama-3.1-8b-instant`)
 - **Trend detection**: week-over-week delta with significance thresholds (≥20% change, ≥5 mentions), pure pandas + scipy — no LLM
 - **Weekly pulse**: ≤250-word summary + exactly 3 action items, Pydantic-validated at schema level
-- **Voice agent**: 7-state finite state machine (GREETING → BOOKED), generates booking codes `IND-{THEME}-{DATE}-{SEQ}`
+- **Voice agent**: 7-state finite state machine (GREETING → BOOKED), generates booking codes `IND-{THEME}-{DATE}-{SEQ}`; booking completion prompts for a separate confirmation email (independent of login credentials)
 
 ### Pillar C — Human-in-the-Loop Operations
 - **HITL approval queue**: SQLite-backed pending-ops store with WAL mode; ops only execute after human approval
@@ -86,7 +86,7 @@
 
 | Layer | Technology |
 |-------|-----------|
-| **UI** | Streamlit 1.50+ · audio-recorder-streamlit |
+| **UI** | Streamlit 1.56+ · audio-recorder-streamlit |
 | **LLM (primary)** | Groq API · llama-3.3-70b-versatile |
 | **LLM (fast tier)** | Groq API · llama-3.1-8b-instant |
 | **LLM (fallback)** | Gemini 2.5 Flash Lite (optional) |
@@ -132,7 +132,7 @@ uv run python scripts/ingest_kb.py
 uv run streamlit run app.py
 ```
 
-**Run the full eval suite** (requires Groq API key, ~40 seconds with parallelisation):
+**Run the full eval suite** (requires Groq API key, ~20–30 seconds with parallelisation):
 ```bash
 uv run python scripts/run_all_evals.py
 # Results → evals/rag_eval_results.json
@@ -182,7 +182,7 @@ uv run python scripts/run_all_evals.py
 
 Questions span three types: `fact_only` (24), `combined` (7), `fee_only` (4).  
 Adversarial categories: `investment_advice` (11), `pii_request` (5).  
-All evals run in parallel via `ThreadPoolExecutor`; total runtime ≈ 30–40 s.
+All evals run in parallel via `ThreadPoolExecutor` (RAG: 4 workers, Safety: 4 workers); total runtime ≈ 20–30 s.
 
 ```bash
 uv run python scripts/run_all_evals.py   # populate evals/EVALS.md
