@@ -18,7 +18,9 @@ def run_ux_eval():
     df = pd.read_csv(reviews_path)
     themes = extract_themes(reviews_path)
     themes_with_trends = compute_trends(themes, reviews_path)
-    pulse = generate_pulse(themes_with_trends, len(df), ("2026-01-01", "2026-04-30"))
+    dates = pd.to_datetime(df["review_date"])
+    date_range = (dates.min().strftime("%Y-%m-%d"), dates.max().strftime("%Y-%m-%d"))
+    pulse = generate_pulse(themes_with_trends, len(df), date_range)
 
     word_count = pulse.get("word_count", 999)
     action_count = len(pulse.get("actions", []))

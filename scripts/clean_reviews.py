@@ -12,7 +12,7 @@ import csv
 import json
 import re
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -87,11 +87,11 @@ def _mask_pii(text: str) -> tuple[str, bool]:
 def _parse_date(raw: str) -> datetime:
     try:
         dt = datetime.strptime(raw, "%Y-%m-%d %H:%M:%S")
-        return dt.replace(tzinfo=datetime.UTC)
+        return dt.replace(tzinfo=UTC)
     except Exception:
         dt = datetime.fromisoformat(raw)
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=datetime.UTC)
+            dt = dt.replace(tzinfo=UTC)
         return dt
 
 
@@ -118,7 +118,7 @@ def main() -> None:
         try:
             dt = _parse_date(str(item.get("at", "")))
         except Exception:
-            dt = datetime(1970, 1, 1, tzinfo=datetime.UTC)
+            dt = datetime(1970, 1, 1, tzinfo=UTC)
         records.append(
             {
                 "review_id": item.get("reviewId") or f"r-{idx:05d}",
