@@ -20,8 +20,13 @@ def get_cached_retriever():
     return HybridRetriever(Path("data/chroma_db"), Path("data/bm25_index"))
 
 
-_MODEL = "llama-3.1-8b-instant"  # switched: 70b daily TPD exhausted; 8b has separate limit
-_RETRIEVE_TOP_K = 5                 # retrieve top 5
+# llama-3.x models were retired by Groq; gpt-oss-20b (low reasoning) gives cited answers
+_MODEL = os.getenv("GROQ_MODEL_ANSWER", "openai/gpt-oss-20b")
+_TYPO_MAP = str.maketrans(
+    {chr(c): "-" for c in (0x2010, 0x2011, 0x2012, 0x2013)}   # unicode hyphens/dashes
+    | {chr(c): " " for c in (0x00A0, 0x202F, 0x2009)}         # no-break / thin spaces
+)
+_RETRIEVE_TOP_K = 5                # retrieve top 5
 _ANSWER_TOP_K = 5                   # pass all 5 to LLM (needed for multi-source questions)
 
 _REFUSAL_MSG = (
@@ -89,7 +94,9 @@ SOURCES:
                 resp = self._client.chat.completions.create(
                     model=_MODEL,
                     temperature=0,
-                    max_tokens=500,
+                    # gpt-oss reasoning tokens count toward max_tokens
+                    max_tokens=2000,
+                    **({"reasoning_effort": "low"} if "gpt-oss" in _MODEL else {}),
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": query},
@@ -97,6 +104,8 @@ SOURCES:
                 )
 
                 answer_text = resp.choices[0].message.content or ""
+                # gpt-oss emits typographic hyphens/spaces; normalise to plain ASCII
+                answer_text = answer_text.translate(_TYPO_MAP)
                 bullet_lines = [
                     line.strip().lstrip("•-* ")
                     for line in answer_text.strip().splitlines()

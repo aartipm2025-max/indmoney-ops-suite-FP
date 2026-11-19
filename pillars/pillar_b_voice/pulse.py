@@ -34,7 +34,8 @@ TOP_K = 3
 SYSTEM_PROMPT = (
     "You are a product operations analyst. Generate a concise weekly product pulse "
     "for the INDmoney app based on user review analysis. Rules:\n"
-    "1. Summary must be UNDER 250 words.\n"
+    "1. The ENTIRE report (all sections and headings included) must be UNDER 200 words. "
+    "Keep each section brief; one short line per theme, quote and action.\n"
     "2. Include EXACTLY 3 action ideas.\n"
     "3. Mention the top 3 themes with their trend direction.\n"
     "4. Include 3 real user quotes (provided below).\n"

@@ -86,7 +86,7 @@ def test_briefing_html_contains_booking_code():
     card = {"booking_code": "IND-SUPP-20260428-002", "topic": "SIP", "sentiment_shift": "stable", "top_themes": [{"name": "Support", "count": 20, "trend": "up"}], "user_quotes": ["Great help"], "talking_points": ["Review support"]}
     html = format_briefing_html(card)
     assert "IND-SUPP-20260428-002" in html
-    assert "<h2>" in html
+    assert "<h2" in html
 
 def test_briefing_plain_contains_booking_code():
     card = {"booking_code": "IND-SUPP-20260428-002", "topic": "SIP", "sentiment_shift": "stable", "top_themes": [{"name": "Support", "count": 20, "trend": "up"}], "user_quotes": ["Great help"], "talking_points": ["Review support"]}
