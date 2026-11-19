@@ -116,14 +116,17 @@ def render_tab_d():
 </div>
 """, unsafe_allow_html=True)
     else:
-        # Pending groups first (newest pending on top), then rest newest-first
-        def _sort_key(item):
-            bc, ops_list = item
-            has_pending = any(op["status"] == "pending" for op in ops_list)
-            latest = max(op.get("created_at", "") for op in ops_list)
-            return (0 if has_pending else 1, latest)
+        # Pending groups first, newest first within each group
+        def _latest(item):
+            return max(op.get("created_at", "") for op in item[1])
 
-        for booking_code, ops in sorted(bookings_map.items(), key=_sort_key):
+        def _not_pending(item):
+            return 0 if any(op["status"] == "pending" for op in item[1]) else 1
+
+        ordered = sorted(bookings_map.items(), key=_latest, reverse=True)
+        ordered = sorted(ordered, key=_not_pending)  # stable: keeps newest-first
+
+        for booking_code, ops in ordered:
             pending_in_group = [op for op in ops if op["status"] == "pending"]
             statuses = [op["status"] for op in ops]
 

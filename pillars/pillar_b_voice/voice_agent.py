@@ -9,6 +9,38 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.logger import log
 
 
+_ISSUED_CODES: set[str] = set()
+
+
+def _next_booking_seq(prefix: str) -> int:
+    """Next free 3-digit sequence for today's booking-code prefix."""
+    used: set[int] = set()
+    try:
+        import sqlite3
+        from pillars.pillar_c_hitl.approval import DB_PATH
+
+        if DB_PATH.exists():
+            conn = sqlite3.connect(str(DB_PATH))
+            try:
+                rows = conn.execute(
+                    "SELECT DISTINCT request_id FROM pending_ops WHERE request_id LIKE ?",
+                    (prefix + "%",),
+                ).fetchall()
+            finally:
+                conn.close()
+            for (rid,) in rows:
+                tail = (rid or "")[len(prefix):]
+                if tail.isdigit():
+                    used.add(int(tail))
+    except Exception as exc:  # queue unavailable — fall back to in-process codes
+        log.warning("voice_agent: could not read HITL queue for booking seq: {}", exc)
+    for code in _ISSUED_CODES:
+        tail = code[len(prefix):] if code.startswith(prefix) else ""
+        if tail.isdigit():
+            used.add(int(tail))
+    return (max(used) + 1) if used else 1
+
+
 class VoiceState(Enum):
     GREETING = "greeting"
     DISCLAIMER = "disclaimer"
@@ -124,8 +156,13 @@ class VoiceAgent:
                 theme_code = code
                 break
         date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
-        seq = str(self.turn_count).zfill(3)
-        return f"IND-{theme_code}-{date_str}-{seq}"
+        prefix = f"IND-{theme_code}-{date_str}-"
+        # Every booking flow takes the same number of turns, so turn_count gave
+        # identical codes and the HITL queue dropped later bookings as duplicates.
+        # Use the next sequence number not yet used today.
+        code = f"{prefix}{_next_booking_seq(prefix):03d}"
+        _ISSUED_CODES.add(code)
+        return code
 
     def process_turn(self, user_input: str) -> dict:
         self.turn_count += 1
